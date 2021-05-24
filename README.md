@@ -1,0 +1,2 @@
+# HCR
+ Husk Comic Reader

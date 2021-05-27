@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:snapping_page_scroll/snapping_page_scroll.dart';
+import 'package:photo_view/photo_view.dart';
 //import 'package:flutter/rendering.dart';
 
 const Map<String, String> HEADERS = <String, String>{
@@ -926,9 +927,11 @@ class _ReaderState extends State<Reader> {
         String pageUrl = page.split('"')[0];
         if (Uri.parse(pageUrl).isAbsolute) {
           pages.add(
-            FadeInImage.assetNetwork(
-              placeholder: 'assets/loading.png',
-              image: pageUrl,
+            InteractiveViewer(
+              child: FadeInImage.assetNetwork(
+                placeholder: 'assets/loading.png',
+                image: pageUrl,
+              ),
             )
           );
         }
@@ -961,7 +964,7 @@ class _ReaderState extends State<Reader> {
           size: 50.0,
           semanticLabel: 'Error loading search results',
         )
-    ) : SnappingPageScroll(
+    ) : PageView (
       scrollDirection: Axis.vertical,
       children: pages,
     );

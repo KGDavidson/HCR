@@ -7,8 +7,6 @@ import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:snapping_page_scroll/snapping_page_scroll.dart';
-import 'package:photo_view/photo_view.dart';
 //import 'package:flutter/rendering.dart';
 
 const Map<String, String> HEADERS = <String, String>{
@@ -17,9 +15,10 @@ const Map<String, String> HEADERS = <String, String>{
 };
 const Duration animationDuration = Duration(milliseconds: 200);
 
-String searchString = "";
-String singleComicHref = "";
-String singleIssueHref = "";
+String searchString;
+String singleComicHref;
+List<String> issueHrefs;
+int singleIssue;
 
 List<bool> sortOrder = [true, false];
 
@@ -549,9 +548,9 @@ class _SingleComicPageState extends State<SingleComicPage> {
         }
       }
 
-
+      issueHrefs = [];
       for (dom.Element issue in issues) {
-        String issueNumber;
+            String issueNumber;
         try {
           issueNumber = issue.getElementsByTagName("td")[0].text.split("#")[1].trim();
         } catch (e) {
@@ -559,6 +558,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
         }
         String issueDate = issue.getElementsByTagName("td")[1].text.trim();
         String issueHref = issue.getElementsByTagName("td")[0].getElementsByTagName("a")[0].attributes["href"];
+        issueHrefs.add(issueHref);
         singleComicResults.add(
           Container(
             padding: EdgeInsets.fromLTRB(10,2,10,0),
@@ -568,7 +568,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                 elevation: 5,
                 child: InkWell(
                   onTap: () {
-                    singleIssueHref = issueHref;
+                    singleIssue = issueHrefs.indexOf(issueHref);
                     Navigator.of(context).push(animatePage(Reader()));
                   },
                   splashFactory: InkRipple.splashFactory,
@@ -919,10 +919,12 @@ class _ReaderState extends State<Reader> {
     });
 
     var formData = new Map<String, dynamic>();
-    final response = await http.post(Uri.parse("https://readcomiconline.li/" + singleIssueHref + "&quality=hq"), headers: HEADERS, body: formData);
+    print("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq");
+    final response = await http.post(Uri.parse("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq"), headers: HEADERS, body: formData);
     if (response.statusCode == 200){
       String html = response.body;
       String pagesJS = html.split("var lstImages = new Array();")[1].split("var currImage = 0;")[0];
+      pages = [];
       for (String page in pagesJS.split('lstImages.push("')){
         String pageUrl = page.split('"')[0];
         if (Uri.parse(pageUrl).isAbsolute) {
@@ -964,9 +966,25 @@ class _ReaderState extends State<Reader> {
           size: 50.0,
           semanticLabel: 'Error loading search results',
         )
-    ) : PageView (
-      scrollDirection: Axis.vertical,
-      children: pages,
+    ) : NotificationListener<OverscrollIndicatorNotification>(
+      onNotification: (overscroll) {
+        if (overscroll.leading) {
+          if (singleIssue >= 0 && singleIssue < issueHrefs.length - 1){
+            singleIssue += 1;
+            reader();
+          }
+        } else {
+          if (singleIssue >= 1 && singleIssue < issueHrefs.length){
+            singleIssue -= 1;
+            reader();
+          }
+        }
+        return;
+      },
+      child: PageView (
+        scrollDirection: Axis.vertical,
+        children: pages,
+      ),
     );
   }
 }

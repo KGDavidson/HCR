@@ -7,6 +7,8 @@ import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transparent_image/transparent_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 //import 'package:flutter/rendering.dart';
 
 const Map<String, String> HEADERS = <String, String>{
@@ -919,7 +921,7 @@ class _ReaderState extends State<Reader> {
     });
 
     var formData = new Map<String, dynamic>();
-    print("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq");
+    print("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=lq");
     final response = await http.post(Uri.parse("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq"), headers: HEADERS, body: formData);
     if (response.statusCode == 200){
       String html = response.body;
@@ -931,8 +933,8 @@ class _ReaderState extends State<Reader> {
           pages.add(
             InteractiveViewer(
               child: FadeInImage.assetNetwork(
-                placeholder: 'assets/loading.png',
                 image: pageUrl,
+                placeholder: 'assets/loading.png',
               ),
             )
           );
@@ -982,6 +984,9 @@ class _ReaderState extends State<Reader> {
         return;
       },
       child: PageView (
+        controller: PageController(
+            viewportFraction: 0.99
+        ),
         scrollDirection: Axis.vertical,
         children: pages,
       ),

@@ -551,6 +551,8 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 class _SingleComicPageState extends State<SingleComicPage> {
+  SharedPreferences prefs;
+
   List<bool> issuesRead = <bool>[];
   List<dom.Element> issues;
 
@@ -569,6 +571,8 @@ class _SingleComicPageState extends State<SingleComicPage> {
   bool showRead = false;
   bool showDownloaded = false;
 
+  RefreshController refreshController = RefreshController(initialRefresh: false);
+
   @override
   void initState() {
     super.initState();
@@ -576,6 +580,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
   }
 
   void loadComic() async {
+    prefs = await SharedPreferences.getInstance();
     setState(() {
       loading = true;
       error = false;
@@ -636,7 +641,6 @@ class _SingleComicPageState extends State<SingleComicPage> {
       issues = issues.reversed.toList();
       issuesRead = List<bool>.filled(issues.length, false);
 
-      final prefs = await SharedPreferences.getInstance();
       String savedComics;
       savedComics = prefs.getString("saved");
       singleComicSaved = false;
@@ -673,6 +677,28 @@ class _SingleComicPageState extends State<SingleComicPage> {
   }
 
   List<Widget> buildIssuesList(){
+    String savedComics;
+    savedComics = prefs.getString("saved");
+    singleComicSaved = false;
+    if (savedComics != null) {
+      Map<String, List<dynamic>> savedComicsData = Map<String, List<dynamic>>.from(json.decode(savedComics));
+      if (savedComicsData.containsKey(singleComicName)) {
+        singleComicSaved = true;
+        if (savedComicsData[singleComicName].length < 4) {
+          savedComicsData[singleComicName].add(Map<String, int>());
+          savedComicsData[singleComicName][3][singleIssue.toString()] = 0;
+        } else {
+          Map<String, dynamic> issuesProgress = savedComicsData[singleComicName][3];
+
+          for (MapEntry<String, dynamic> issueProgress in issuesProgress.entries) {
+            int issueNumber = int.parse(issueProgress.key);
+            if (issueProgress.value == -1) {
+              issuesRead[issueNumber] = true;
+            }
+          }
+        }
+      }
+    }
     List<Widget> singleComicResults = <Widget>[];
     for (dom.Element issue in issues) {
       String issueNumber;
@@ -848,226 +874,235 @@ class _SingleComicPageState extends State<SingleComicPage> {
                       size: 50.0,
                       semanticLabel: 'Error loading search results',
                     )
-                ) : SingleChildScrollView(
-                  child: Column (
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                        padding: EdgeInsets.fromLTRB(10,10,10,5),
-                        width: double.maxFinite,
-                        child: Card(
-                          elevation: 5,
-                          child: Stack(
-                            children: <Widget>[
-                              Column(
-                                children: <Widget>[
-                                  Container(
-                                    height: 170,
-                                    margin: EdgeInsets.fromLTRB(10,10,10,10),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: <Widget>[
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: Colors.black,
-                                                width: 5,
-                                              )
-                                          ),
-                                          height: double.maxFinite,
-                                          child: FadeInImage.assetNetwork(
-                                              placeholder: 'assets/loading.png',
-                                              image: imageUrl
-                                          ),
+                ) : Column (
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      padding: EdgeInsets.fromLTRB(10,10,10,5),
+                      width: double.maxFinite,
+                      child: Card(
+                        elevation: 5,
+                        child: Stack(
+                          children: <Widget>[
+                            Column(
+                              children: <Widget>[
+                                Container(
+                                  height: 170,
+                                  margin: EdgeInsets.fromLTRB(10,10,10,10),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: <Widget>[
+                                      Container(
+                                        decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.black,
+                                              width: 5,
+                                            )
                                         ),
-                                        Expanded(
-                                          child: Column(
-                                            children: <Widget>[
-                                              Expanded(
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  margin: EdgeInsets.fromLTRB(20,20,20,20),
-                                                  child: Text(
-                                                    singleComicName,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 22,
-                                                    ),
+                                        height: double.maxFinite,
+                                        child: FadeInImage.assetNetwork(
+                                            placeholder: 'assets/loading.png',
+                                            image: imageUrl
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          children: <Widget>[
+                                            Expanded(
+                                              child: Container(
+                                                alignment: Alignment.center,
+                                                margin: EdgeInsets.fromLTRB(20,20,20,20),
+                                                child: Text(
+                                                  singleComicName,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 22,
                                                   ),
                                                 ),
                                               ),
-                                              Expanded(
-                                                child: Container(
-                                                  alignment: Alignment.topLeft,
-                                                  margin: EdgeInsets.fromLTRB(20,0,20,0),
-                                                  child: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.start,
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: <Widget>[
-                                                      Text(
-                                                        publisher,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
-                                                        ),
+                                            ),
+                                            Expanded(
+                                              child: Container(
+                                                alignment: Alignment.topLeft,
+                                                margin: EdgeInsets.fromLTRB(20,0,20,0),
+                                                child: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.start,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Text(
+                                                      publisher,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.left,
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 15,
                                                       ),
-                                                      Text(
-                                                        writer,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
-                                                        ),
+                                                    ),
+                                                    Text(
+                                                      writer,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.left,
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 15,
                                                       ),
-                                                      Text(
-                                                        artist,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
-                                                        ),
+                                                    ),
+                                                    Text(
+                                                      artist,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.left,
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 15,
                                                       ),
-                                                      Text(
-                                                        pubDate,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
-                                                        ),
+                                                    ),
+                                                    Text(
+                                                      pubDate,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.left,
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 15,
                                                       ),
-                                                    ],
-                                                  ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              )
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      )
+                                    ],
                                   ),
-                                  Container(
-                                    height: 50,
-                                    margin: EdgeInsets.fromLTRB(10,0,10,10),
-                                    child: Text(
+                                ),
+                                Container(
+                                  height: 50,
+                                  margin: EdgeInsets.fromLTRB(10,0,10,10),
+                                  child: Text(
+                                    summary,
+                                  ),
+                                )
+                              ],
+                            ),
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: IconButton(
+                                  onPressed: () async {
+                                    List<dynamic> comicData = [
+                                      imageUrl,
                                       summary,
-                                    ),
+                                      singleComicHref,
+                                    ];
+
+                                    final prefs = await SharedPreferences.getInstance();
+                                    String savedComics = prefs.getString("saved");
+                                    Map<String, dynamic> savedComicsData;
+                                    try{
+                                      savedComicsData = json.decode(savedComics);
+                                    } catch (e) {print(e);}
+
+                                    if (savedComicsData == null){
+                                      savedComicsData = <String, List<dynamic>>{};
+                                    }
+                                    if (singleComicSaved){
+                                      savedComicsData.remove(singleComicName);
+                                    } else {
+                                      savedComicsData[singleComicName] = comicData;
+                                    }
+                                    prefs.setString('saved', json.encode(savedComicsData));
+                                    singleComicSaved = !singleComicSaved;
+                                    setState(() {});
+                                  },
+                                  icon: singleComicSaved ? Icon(
+                                    Icons.favorite,
+                                    color: Colors.red,
+                                  ) : Icon(
+                                    Icons.favorite_border,
+                                    color: Colors.red,
                                   )
-                                ],
                               ),
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: IconButton(
-                                    onPressed: () async {
-                                      List<dynamic> comicData = [
-                                        imageUrl,
-                                        summary,
-                                        singleComicHref,
-                                      ];
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.fromLTRB(10,2,10,0),
+                      height: 70,
+                      width: double.maxFinite,
+                      child: Card(
+                        elevation: 5,
+                        child: Container(
+                          margin: EdgeInsets.fromLTRB(10,10,10,10),
+                          padding: EdgeInsets.fromLTRB(10,0,10,0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: <Widget>[
+                              ElevatedButton(
+                                onPressed: () {
 
-                                      final prefs = await SharedPreferences.getInstance();
-                                      String savedComics = prefs.getString("saved");
-                                      Map<String, dynamic> savedComicsData;
-                                      try{
-                                         savedComicsData = json.decode(savedComics);
-                                      } catch (e) {print(e);}
-
-                                      if (savedComicsData == null){
-                                        savedComicsData = <String, List<dynamic>>{};
-                                      }
-                                      if (singleComicSaved){
-                                        savedComicsData.remove(singleComicName);
-                                      } else {
-                                        savedComicsData[singleComicName] = comicData;
-                                      }
-                                      prefs.setString('saved', json.encode(savedComicsData));
-                                      singleComicSaved = !singleComicSaved;
-                                      setState(() {});
-                                    },
-                                    icon: singleComicSaved ? Icon(
-                                      Icons.favorite,
-                                      color: Colors.red,
-                                    ) : Icon(
-                                      Icons.favorite_border,
-                                      color: Colors.red,
+                                },
+                                child: Text("Download All"),
+                                style: ElevatedButton.styleFrom(
+                                    primary: Color(0xff00c8f0),
+                                    side: BorderSide(
+                                        width: 1.5,
+                                        color: Colors.black
                                     )
                                 ),
-                              )
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: <Widget>[
+                                  IconButton(
+                                    onPressed: (){
+                                      reversedList = !reversedList;
+                                      setState(() {});
+                                    },
+                                    icon: reversedList ? Icon(Icons.keyboard_arrow_up) : Icon(Icons.keyboard_arrow_down),
+                                  ),
+                                  IconButton(
+                                    onPressed: (){
+                                      showDownloaded = !showDownloaded;
+                                      setState(() {});
+                                    },
+                                    icon: showDownloaded ? Icon(Icons.download, color: Color(0xff00c8f0),) : Icon(Icons.download, color: Colors.blueGrey),
+                                  ),
+                                  IconButton(
+                                    onPressed: (){
+                                      showRead = !showRead;
+                                      setState(() {});
+                                    },
+                                    icon: showRead ? Icon(Icons.album, color: Color(0xff00c8f0),) : Icon(Icons.adjust, color: Colors.blueGrey),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
                       ),
-                      Container(
-                        padding: EdgeInsets.fromLTRB(10,2,10,0),
-                        height: 70,
-                        width: double.maxFinite,
-                        child: Card(
-                          elevation: 5,
-                          child: Container(
-                            margin: EdgeInsets.fromLTRB(10,10,10,10),
-                            padding: EdgeInsets.fromLTRB(10,0,10,0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                ElevatedButton(
-                                  onPressed: () {
-
-                                  },
-                                  child: Text("Download All"),
-                                  style: ElevatedButton.styleFrom(
-                                      primary: Color(0xff00c8f0),
-                                      side: BorderSide(
-                                          width: 1.5,
-                                          color: Colors.black
-                                      )
-                                  ),
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: <Widget>[
-                                    IconButton(
-                                      onPressed: (){
-                                        reversedList = !reversedList;
-                                        setState(() {});
-                                      },
-                                      icon: reversedList ? Icon(Icons.keyboard_arrow_up) : Icon(Icons.keyboard_arrow_down),
-                                    ),
-                                    IconButton(
-                                      onPressed: (){
-                                        showDownloaded = !showDownloaded;
-                                        setState(() {});
-                                      },
-                                      icon: showDownloaded ? Icon(Icons.download, color: Color(0xff00c8f0),) : Icon(Icons.download, color: Colors.blueGrey),
-                                    ),
-                                    IconButton(
-                                      onPressed: (){
-                                        showRead = !showRead;
-                                        setState(() {});
-                                      },
-                                      icon: showRead ? Icon(Icons.album, color: Color(0xff00c8f0),) : Icon(Icons.adjust, color: Colors.blueGrey),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Column(
-                        children: buildIssuesList(),
+                    ),
+                    Expanded(
+                      child: SmartRefresher(
+                        enablePullDown: true,
+                        header: MaterialClassicHeader(),
+                        controller: refreshController,
+                        onRefresh: () async {
+                          setState(() {});
+                          refreshController.refreshCompleted();
+                        },
+                        child: ListView(
+                          children: buildIssuesList(),
+                        )
                       )
-                    ],
-                  ),
+                    )
+                  ],
                 ),
               ),
             ),
@@ -1078,7 +1113,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
 }
 
 class _ReaderState extends State<Reader> {
-  PageController controller = PageController(viewportFraction: 0.99);
+  PageController controller = PageController();
   RefreshController swipeController = RefreshController(initialRefresh: false);
   int _currentPage = 0;
   int t;
@@ -1107,7 +1142,7 @@ class _ReaderState extends State<Reader> {
       } else {
         int initPage = (savedComicsData[singleComicName][3][singleIssue.toString()]);
         if (initPage != null){
-          controller = PageController(viewportFraction: 0.99, initialPage: initPage);
+          controller = PageController(initialPage: initPage);
         }
       }
     }
@@ -1193,20 +1228,17 @@ class _ReaderState extends State<Reader> {
           semanticLabel: 'Error loading search results',
         )
     ) : Listener(
-      onPointerMove: (pos) async { //Get pointer position when pointer moves
-        //If time since last scroll is undefined or over 100 milliseconds
+      onPointerMove: (pos) async {
+        print(pos.size);
         if (t == null || DateTime.now().millisecondsSinceEpoch - t > 100) {
           t = DateTime.now().millisecondsSinceEpoch;
           p = pos.position.dy; //x position
         } else {
           //Calculate velocity
           double v = (p - pos.position.dy) / (DateTime.now().millisecondsSinceEpoch - t);
-          if (v < -3 || v > 2) {
+          if (v < -1 || v > 1) {
             _currentPage = controller.page.toInt();
             await controller.animateToPage(_currentPage + (v * 0.5).round(),duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
-          } else {
-            _currentPage = controller.page.toInt();
-            await controller.animateToPage(_currentPage + ((v/v.abs())).round(), duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
           }
         }
         if(controller.page.toInt() == pages.length - 1) {
@@ -1238,7 +1270,7 @@ class _ReaderState extends State<Reader> {
         },
         child: CustomScrollView(
           controller: controller,
-          physics: NeverScrollableScrollPhysics(),
+          physics: PageScrollPhysics(),
           scrollDirection: Axis.vertical,
           slivers: <Widget>[
             SliverList(

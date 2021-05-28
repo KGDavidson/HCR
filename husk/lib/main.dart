@@ -7,19 +7,90 @@ import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:transparent_image/transparent_image.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:snapping_page_scroll/snapping_page_scroll.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 //import 'package:flutter/rendering.dart';
+
+List<Widget> emptyLibrary = <Widget>[
+  Container(
+    padding: EdgeInsets.fromLTRB(10,10,10,0),
+    height: 150,
+    width: double.maxFinite,
+    child: Card(
+      elevation: 5,
+      child: InkWell(
+        splashFactory: InkRipple.splashFactory,
+        child: Container(
+          margin: EdgeInsets.fromLTRB(10,10,10,10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.centerLeft,
+                        margin: EdgeInsets.fromLTRB(20,0,0,0),
+                        child: Text(
+                          "Search and favourite your comics!",
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.topLeft,
+                        margin: EdgeInsets.fromLTRB(20,0,0,0),
+                        child: Text(
+                          "Pull down to refresh...",
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    ),
+  ),
+];
 
 const Map<String, String> HEADERS = <String, String>{
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
   'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+  'authority': 'readcomiconline.li',
+  'pragma': 'no-cache',
+  'cache-control': 'no-cache',
+  'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
+  'sec-ch-ua-mobile': '?0',
+  'upgrade-insecure-requests': '1',
+  'sec-fetch-site': 'same-origin',
+  'sec-fetch-mode': 'no-cors',
+  'sec-fetch-user': '?1',
+  'sec-fetch-dest': 'image',
+  'referer': 'https://readcomiconline.li/',
+  'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
+  'Referer': 'https://readcomiconline.li/',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36',
 };
 const Duration animationDuration = Duration(milliseconds: 200);
 
 String searchString;
 String singleComicHref;
 List<String> issueHrefs;
+String singleComicName;
 int singleIssue;
 
 List<bool> sortOrder = [true, false];
@@ -91,6 +162,8 @@ class _LibraryPageState extends State<LibraryPage> {
   bool loading = false;
   bool error = false;
 
+  RefreshController refreshController = RefreshController(initialRefresh: false);
+
   @override
   void initState() {
     super.initState();
@@ -107,15 +180,16 @@ class _LibraryPageState extends State<LibraryPage> {
     savedComics = prefs.getString("saved");
     if (savedComics != null) {
       Map<String, List<dynamic>> savedComicsData = Map<String, List<dynamic>>.from(json.decode(savedComics));
-      libraryItems = [];
-      for (MapEntry<String, List<dynamic>> comic in savedComicsData.entries){
-        String comicName = comic.key;
-        String imageUrl = comic.value[0];
-        String description = comic.value[1];
-        String comicHref = comic.value[2];
-        libraryItems.add(
+      if (savedComicsData.entries.length > 0) {
+        libraryItems = [];
+        for (MapEntry<String, List<dynamic>> comic in savedComicsData.entries) {
+          String comicName = comic.key;
+          String imageUrl = comic.value[0];
+          String description = comic.value[1];
+          String comicHref = comic.value[2];
+          libraryItems.add(
             Container(
-              padding: EdgeInsets.fromLTRB(10,10,10,0),
+              padding: EdgeInsets.fromLTRB(10, 10, 10, 0),
               height: 150,
               width: double.maxFinite,
               child: Card(
@@ -127,23 +201,23 @@ class _LibraryPageState extends State<LibraryPage> {
                     Navigator.of(context).push(animatePage(SingleComicPage()));
                   },
                   child: Container(
-                    margin: EdgeInsets.fromLTRB(10,10,10,10),
+                    margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisSize: MainAxisSize.max,
                       children: <Widget>[
                         Container(
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.black,
-                                  width: 5,
-                                )
-                            ),
-                            height: double.maxFinite,
-                            child: FadeInImage.assetNetwork(
+                          decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.black,
+                                width: 5,
+                              )
+                          ),
+                          height: double.maxFinite,
+                          child: FadeInImage.assetNetwork(
                               placeholder: 'assets/loading.png',
                               image: imageUrl
-                            ),
+                          ),
                         ),
                         Expanded(
                           child: Column(
@@ -151,7 +225,7 @@ class _LibraryPageState extends State<LibraryPage> {
                               Expanded(
                                 child: Container(
                                   alignment: Alignment.centerLeft,
-                                  margin: EdgeInsets.fromLTRB(20,0,0,0),
+                                  margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
                                   child: Text(
                                     comicName,
                                     overflow: TextOverflow.ellipsis,
@@ -165,7 +239,7 @@ class _LibraryPageState extends State<LibraryPage> {
                               Expanded(
                                 child: Container(
                                   alignment: Alignment.topLeft,
-                                  margin: EdgeInsets.fromLTRB(20,0,0,0),
+                                  margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
                                   child: Text(
                                     description,
                                     textAlign: TextAlign.left,
@@ -184,8 +258,13 @@ class _LibraryPageState extends State<LibraryPage> {
                 ),
               ),
             ),
-        );
+          );
+        }
+      } else {
+        libraryItems = emptyLibrary;
       }
+    } else {
+      libraryItems = emptyLibrary;
     }
     setState(() {
       loading = false;
@@ -207,61 +286,72 @@ class _LibraryPageState extends State<LibraryPage> {
           child: Scaffold(
             backgroundColor: Colors.transparent,
             body: Center(
-              child: Column(
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.all(20),
-                    width: double.maxFinite,
-                    child: TextField(
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (value) {
-                        searchString = value;
-                        Navigator.of(context).push(animatePage(SearchPage()));
-                      },
-                      decoration: InputDecoration(
-                        fillColor: Colors.white,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(100)),
-                          borderSide:  BorderSide(color: Colors.black, width: 5),
+              child: NotificationListener<OverscrollIndicatorNotification>(
+                onNotification: (overscroll) {
+                  overscroll.disallowGlow();
+                  return;
+                },
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
+                      Container(
+                        height: 60,
+                        margin: EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        width: double.maxFinite,
+                        child: TextField(
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: (value) {
+                            searchString = value;
+                            Navigator.of(context).push(animatePage(SearchPage()));
+                          },
+                          decoration: InputDecoration(
+                            fillColor: Colors.white,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(100)),
+                              borderSide:  BorderSide(color: Colors.black, width: 5),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(100)),
+                              borderSide:  BorderSide(color: Colors.black, width: 5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(100)),
+                              borderSide:  BorderSide(color: Colors.black, width: 5),
+                            ),
+                            contentPadding: EdgeInsets.all(20),
+                            hintText: 'Search ...',
+                            hasFloatingPlaceholder: false,
+                          ),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(100)),
-                          borderSide:  BorderSide(color: Colors.black, width: 5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(100)),
-                          borderSide:  BorderSide(color: Colors.black, width: 5),
-                        ),
-                        contentPadding: EdgeInsets.all(20),
-                        hintText: 'Search ...',
-                        hasFloatingPlaceholder: false,
                       ),
-                    ),
-                  ),
-                  loading ? Center(
-                    child: CircularProgressIndicator(),
-                  ) : error ? Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        color: Colors.pink,
-                        size: 50.0,
-                        semanticLabel: 'Error loading search results',
-                      )
-                  ) : RefreshIndicator(
-                    onRefresh: () async {
-                      await library();
-                      return;
-                    },
-                    child: SingleChildScrollView(
-                      physics: AlwaysScrollableScrollPhysics(),
-                      child: Column (
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: libraryItems,
+                      loading ? Center(
+                        child: CircularProgressIndicator(),
+                      ) : error ? Center(
+                          child: Icon(
+                            Icons.error_outline,
+                            color: Colors.pink,
+                            size: 50.0,
+                            semanticLabel: 'Error loading search results',
+                          )
+                      ) : Container(
+                        height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 80,
+                        child: SmartRefresher(
+                          controller: refreshController,
+                          enablePullDown: true,
+                          header: MaterialClassicHeader(),
+                          onRefresh: () async {
+                            await library();
+                            refreshController.refreshCompleted();
+                          },
+                          child: ListView (
+                            children: libraryItems,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -461,9 +551,9 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 class _SingleComicPageState extends State<SingleComicPage> {
-  List<Widget> singleComicResults = <Widget>[];
+  List<bool> issuesRead = <bool>[];
+  List<dom.Element> issues;
 
-  String comicName;
   String publisher;
   String writer;
   String artist;
@@ -475,6 +565,9 @@ class _SingleComicPageState extends State<SingleComicPage> {
   bool error = false;
 
   bool singleComicSaved = false;
+  bool reversedList = false;
+  bool showRead = false;
+  bool showDownloaded = false;
 
   @override
   void initState() {
@@ -483,7 +576,6 @@ class _SingleComicPageState extends State<SingleComicPage> {
   }
 
   void loadComic() async {
-
     setState(() {
       loading = true;
       error = false;
@@ -493,11 +585,11 @@ class _SingleComicPageState extends State<SingleComicPage> {
     final response = await http.post(Uri.parse(singleComicHref), headers: HEADERS, body: formData);
     if (response.statusCode == 200) {
       dom.Document doc = html.parse(response.body);
-      List<dom.Element> issues = doc.getElementsByClassName("listing")[0].getElementsByTagName("tr");
+      issues = doc.getElementsByClassName("listing")[0].getElementsByTagName("tr");
       issues.removeAt(0);
       issues.removeAt(0);
       dom.Element infoSection = doc.getElementById("leftside").getElementsByClassName("barContent")[0];
-      comicName = infoSection.getElementsByClassName("bigChar")[0].text;
+      singleComicName = infoSection.getElementsByClassName("bigChar")[0].text;
       List<dom.Element> infos = infoSection.getElementsByTagName("p");
       publisher = "-";
       writer = "-";
@@ -539,79 +631,34 @@ class _SingleComicPageState extends State<SingleComicPage> {
         imageUrl = "https://readcomiconline.li" + imgSrc;
       }
 
+      issueHrefs = [];
+
+      issues = issues.reversed.toList();
+      issuesRead = List<bool>.filled(issues.length, false);
+
       final prefs = await SharedPreferences.getInstance();
       String savedComics;
       savedComics = prefs.getString("saved");
       singleComicSaved = false;
       if (savedComics != null) {
         Map<String, List<dynamic>> savedComicsData = Map<String, List<dynamic>>.from(json.decode(savedComics));
-        if (savedComicsData.containsKey(comicName)) {
+        if (savedComicsData.containsKey(singleComicName)) {
           singleComicSaved = true;
+          if (savedComicsData[singleComicName].length < 4) {
+            savedComicsData[singleComicName].add(Map<String, int>());
+            savedComicsData[singleComicName][3][singleIssue.toString()] = 0;
+          } else {
+            Map<String, dynamic> issuesProgress = savedComicsData[singleComicName][3];
+
+            for (MapEntry<String, dynamic> issueProgress in issuesProgress.entries) {
+              int issueNumber = int.parse(issueProgress.key);
+              if (issueProgress.value == -1) {
+                issuesRead[issueNumber] = true;
+              }
+            }
+          }
         }
       }
-
-      issueHrefs = [];
-      for (dom.Element issue in issues) {
-            String issueNumber;
-        try {
-          issueNumber = issue.getElementsByTagName("td")[0].text.split("#")[1].trim();
-        } catch (e) {
-          issueNumber = issue.getElementsByTagName("td")[0].text.trim();
-        }
-        String issueDate = issue.getElementsByTagName("td")[1].text.trim();
-        String issueHref = issue.getElementsByTagName("td")[0].getElementsByTagName("a")[0].attributes["href"];
-        issueHrefs.add(issueHref);
-        singleComicResults.add(
-          Container(
-            padding: EdgeInsets.fromLTRB(10,2,10,0),
-            height: 70,
-            width: double.maxFinite,
-            child: Card(
-                elevation: 5,
-                child: InkWell(
-                  onTap: () {
-                    singleIssue = issueHrefs.indexOf(issueHref);
-                    Navigator.of(context).push(animatePage(Reader()));
-                  },
-                  splashFactory: InkRipple.splashFactory,
-                  child: Container(
-                    margin: EdgeInsets.fromLTRB(10,10,10,10),
-                    padding: EdgeInsets.fromLTRB(10,0,10,0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          issueDate,
-                          textAlign: TextAlign.left,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        VerticalDivider(),
-                        Flexible(
-                          child: Text(
-                            "#" + issueNumber,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 17,
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                )
-            ),
-          ),
-        );
-      }
-
-      singleComicResults = singleComicResults.reversed.toList();
       setState(() {
         loading = false;
         error = false;
@@ -623,6 +670,152 @@ class _SingleComicPageState extends State<SingleComicPage> {
       });
     }
     setState(() {});
+  }
+
+  List<Widget> buildIssuesList(){
+    List<Widget> singleComicResults = <Widget>[];
+    for (dom.Element issue in issues) {
+      String issueNumber;
+      try {
+        issueNumber = issue.getElementsByTagName("td")[0].text.split("#")[1].trim();
+      } catch (e) {
+        issueNumber = issue.getElementsByTagName("td")[0].text.trim();
+      }
+      String issueDate = issue.getElementsByTagName("td")[1].text.trim();
+      String issueHref = issue.getElementsByTagName("td")[0].getElementsByTagName("a")[0].attributes["href"];
+      issueHrefs.add(issueHref);
+      if (showRead | !issuesRead[issueHrefs.indexOf(issueHref)]) {
+        singleComicResults.add(
+          Container(
+            padding: EdgeInsets.fromLTRB(10, 2, 10, 0),
+            height: 70,
+            width: double.maxFinite,
+            child: Card(
+                elevation: 5,
+                child: InkWell(
+                  onTap: () {
+                    singleIssue = issueHrefs.indexOf(issueHref);
+                    Navigator.of(context).push(animatePage(Reader()));
+                  },
+                  splashFactory: InkRipple.splashFactory,
+                  child: Container(
+                    margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                    padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Flexible(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                issueDate,
+                                textAlign: TextAlign.left,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              VerticalDivider(),
+                              Flexible(
+                                child: Text(
+                                  "#" + issueNumber,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.left,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            IconButton(
+                                onPressed: () {
+
+                                },
+                                icon: Icon(
+                                  Icons.download,
+                                  color: Colors.blueGrey,
+                                )
+                            ),
+                            IconButton(
+                                onPressed: () async {
+                                  issuesRead[issueHrefs.indexOf(issueHref)] =
+                                  !issuesRead[issueHrefs.indexOf(issueHref)];
+                                  final prefs = await SharedPreferences
+                                      .getInstance();
+                                  String savedComics;
+                                  savedComics = prefs.getString("saved");
+                                  singleComicSaved = false;
+                                  if (savedComics != null) {
+                                    Map<String,
+                                        List<dynamic>> savedComicsData = Map<
+                                        String,
+                                        List<dynamic>>.from(
+                                        json.decode(savedComics));
+                                    if (savedComicsData.containsKey(
+                                        singleComicName)) {
+                                      singleComicSaved = true;
+                                      if (savedComicsData[singleComicName]
+                                          .length < 4) {
+                                        savedComicsData[singleComicName].add(
+                                            Map<String, int>());
+                                        savedComicsData[singleComicName][3][singleIssue
+                                            .toString()] = 0;
+                                      } else {
+                                        Map<String,
+                                            dynamic> issuesProgress = savedComicsData[singleComicName][3];
+                                        int issueNumber = issueHrefs.indexOf(
+                                            issueHref);
+                                        if (issuesRead[issueNumber]) {
+                                          issuesProgress[issueNumber
+                                              .toString()] = -1;
+                                        } else {
+                                          issuesProgress[issueNumber
+                                              .toString()] = 0;
+                                        }
+                                      }
+                                    }
+                                    prefs.setString(
+                                        "saved", jsonEncode(savedComicsData));
+                                  }
+                                  setState(() {});
+                                },
+                                icon: issuesRead[issueHrefs.indexOf(issueHref)]
+                                    ? Icon(
+                                  Icons.album,
+                                  color: Color(0xff00c8f0),
+                                )
+                                    : Icon(
+                                  Icons.adjust,
+                                  color: Colors.blueGrey,
+                                )
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+            ),
+          ),
+        );
+      }
+    }
+    if (reversedList) {
+      singleComicResults = singleComicResults.reversed.toList();
+    }
+    return singleComicResults;
   }
 
   @override
@@ -697,7 +890,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                                   alignment: Alignment.center,
                                                   margin: EdgeInsets.fromLTRB(20,20,20,20),
                                                   child: Text(
-                                                    comicName,
+                                                    singleComicName,
                                                     overflow: TextOverflow.ellipsis,
                                                     style: TextStyle(
                                                       fontWeight: FontWeight.bold,
@@ -786,17 +979,14 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                          savedComicsData = json.decode(savedComics);
                                       } catch (e) {print(e);}
 
-                                      print(savedComicsData.toString());
-
                                       if (savedComicsData == null){
                                         savedComicsData = <String, List<dynamic>>{};
                                       }
                                       if (singleComicSaved){
-                                        savedComicsData.remove(comicName);
+                                        savedComicsData.remove(singleComicName);
                                       } else {
-                                        savedComicsData[comicName] = comicData;
+                                        savedComicsData[singleComicName] = comicData;
                                       }
-                                      print(savedComicsData.toString());
                                       prefs.setString('saved', json.encode(savedComicsData));
                                       singleComicSaved = !singleComicSaved;
                                       setState(() {});
@@ -822,25 +1012,12 @@ class _SingleComicPageState extends State<SingleComicPage> {
                           elevation: 5,
                           child: Container(
                             margin: EdgeInsets.fromLTRB(10,10,10,10),
-                            padding: EdgeInsets.fromLTRB(10,0,0,0),
+                            padding: EdgeInsets.fromLTRB(10,0,10,0),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               mainAxisSize: MainAxisSize.max,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
-                                ElevatedButton(
-                                  onPressed: () {
-
-                                  },
-                                  child: Text("Resume"),
-                                  style: ElevatedButton.styleFrom(
-                                      primary: Color(0xff00c8f0),
-                                      side: BorderSide(
-                                          width: 1.5,
-                                          color: Colors.black
-                                      )
-                                  ),
-                                ),
                                 ElevatedButton(
                                   onPressed: () {
 
@@ -854,34 +1031,32 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                       )
                                   ),
                                 ),
-                                ToggleButtons(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.end,
                                   children: <Widget>[
-                                    Icon(Icons.keyboard_arrow_up),
-                                    Icon(Icons.keyboard_arrow_down),
+                                    IconButton(
+                                      onPressed: (){
+                                        reversedList = !reversedList;
+                                        setState(() {});
+                                      },
+                                      icon: reversedList ? Icon(Icons.keyboard_arrow_up) : Icon(Icons.keyboard_arrow_down),
+                                    ),
+                                    IconButton(
+                                      onPressed: (){
+                                        showDownloaded = !showDownloaded;
+                                        setState(() {});
+                                      },
+                                      icon: showDownloaded ? Icon(Icons.download, color: Color(0xff00c8f0),) : Icon(Icons.download, color: Colors.blueGrey),
+                                    ),
+                                    IconButton(
+                                      onPressed: (){
+                                        showRead = !showRead;
+                                        setState(() {});
+                                      },
+                                      icon: showRead ? Icon(Icons.album, color: Color(0xff00c8f0),) : Icon(Icons.adjust, color: Colors.blueGrey),
+                                    ),
                                   ],
-                                  onPressed: (int index) {
-                                    setState(() {
-                                      for (int buttonIndex = 0; buttonIndex < sortOrder.length; buttonIndex++) {
-                                        if (buttonIndex == index) {
-                                          if (sortOrder[buttonIndex] != true) {
-                                            singleComicResults = singleComicResults.reversed.toList();
-                                          }
-                                          sortOrder[buttonIndex] = true;
-                                        } else {
-                                          sortOrder[buttonIndex] = false;
-                                        }
-                                      }
-                                    });
-                                  },
-                                  fillColor: Color(0xff00c8f0),
-                                  selectedColor: Colors.white,
-                                  isSelected: sortOrder,
-                                  borderColor: Colors.black,
-                                  selectedBorderColor: Colors.black,
-                                  borderWidth: 1.5,
-                                  borderRadius: BorderRadius.all(
-                                    Radius.circular(5),
-                                  ),
                                 ),
                               ],
                             ),
@@ -889,7 +1064,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                         ),
                       ),
                       Column(
-                        children: singleComicResults,
+                        children: buildIssuesList(),
                       )
                     ],
                   ),
@@ -903,6 +1078,12 @@ class _SingleComicPageState extends State<SingleComicPage> {
 }
 
 class _ReaderState extends State<Reader> {
+  PageController controller = PageController(viewportFraction: 0.99);
+  RefreshController swipeController = RefreshController(initialRefresh: false);
+  int _currentPage = 0;
+  int t;
+  double p;
+
   List<Widget> pages = <Widget>[];
 
   bool loading = false;
@@ -915,28 +1096,61 @@ class _ReaderState extends State<Reader> {
   }
 
   void reader() async {
+    final prefs = await SharedPreferences.getInstance();
+    String savedComics;
+    savedComics = prefs.getString("saved");
+    if (savedComics != null) {
+      Map<String, List<dynamic>> savedComicsData = Map<String, List<dynamic>>.from(json.decode(savedComics));
+      if (savedComicsData[singleComicName].length < 4) {
+        savedComicsData[singleComicName].add(Map<String, int>());
+        savedComicsData[singleComicName][3][singleIssue.toString()] = 0;
+      } else {
+        int initPage = (savedComicsData[singleComicName][3][singleIssue.toString()]);
+        if (initPage != null){
+          controller = PageController(viewportFraction: 0.99, initialPage: initPage);
+        }
+      }
+    }
+
     setState(() {
       loading = true;
       error = false;
     });
 
     var formData = new Map<String, dynamic>();
-    print("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=lq");
     final response = await http.post(Uri.parse("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq"), headers: HEADERS, body: formData);
     if (response.statusCode == 200){
       String html = response.body;
       String pagesJS = html.split("var lstImages = new Array();")[1].split("var currImage = 0;")[0];
       pages = [];
-      for (String page in pagesJS.split('lstImages.push("')){
+      List<String> pageSplit = pagesJS.split('lstImages.push("');
+      for (String page in pageSplit){
         String pageUrl = page.split('"')[0];
         if (Uri.parse(pageUrl).isAbsolute) {
           pages.add(
-            InteractiveViewer(
-              child: FadeInImage.assetNetwork(
-                image: pageUrl,
-                placeholder: 'assets/loading.png',
-              ),
-            )
+              Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    InteractiveViewer(
+                      child: FadeInImage.assetNetwork(
+                        image: pageUrl,
+                        placeholder: 'assets/loading.png',
+                      ),
+                    ),
+                    Text(
+                      (pageSplit.indexOf(page)).toString(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                        decoration: TextDecoration.none,
+                      ),
+                    )
+                  ],
+                ),
+              )
           );
         }
       }
@@ -952,9 +1166,19 @@ class _ReaderState extends State<Reader> {
     }
   }
 
-  Widget customCard(){
-    //https://2.bp.blogspot.com/os-X0tP2ZnktLie3nALk__eBmqVF0d9yhHJyugBZ1O9KhwoWU5mE6jGkvOvojYDg9TpJ7Ez9olFj=s0
-    return Container();
+  Future savePage(pageNum) async {
+    final prefs = await SharedPreferences.getInstance();
+    String savedComics;
+    savedComics = prefs.getString("saved");
+    if (savedComics != null) {
+      Map<String, List<dynamic>> savedComicsData = Map<String, List<dynamic>>.from(json.decode(savedComics));
+      if (savedComicsData[singleComicName].length < 4) {
+        savedComicsData[singleComicName].add(Map<String, int>());
+      }
+      savedComicsData[singleComicName][3][singleIssue.toString()] = pageNum;
+      prefs.setString("saved", json.encode(savedComicsData));
+    }
+    return;
   }
 
   @override
@@ -968,27 +1192,64 @@ class _ReaderState extends State<Reader> {
           size: 50.0,
           semanticLabel: 'Error loading search results',
         )
-    ) : NotificationListener<OverscrollIndicatorNotification>(
-      onNotification: (overscroll) {
-        if (overscroll.leading) {
-          if (singleIssue >= 0 && singleIssue < issueHrefs.length - 1){
-            singleIssue += 1;
-            reader();
-          }
+    ) : Listener(
+      onPointerMove: (pos) async { //Get pointer position when pointer moves
+        //If time since last scroll is undefined or over 100 milliseconds
+        if (t == null || DateTime.now().millisecondsSinceEpoch - t > 100) {
+          t = DateTime.now().millisecondsSinceEpoch;
+          p = pos.position.dy; //x position
         } else {
+          //Calculate velocity
+          double v = (p - pos.position.dy) / (DateTime.now().millisecondsSinceEpoch - t);
+          if (v < -3 || v > 2) {
+            _currentPage = controller.page.toInt();
+            await controller.animateToPage(_currentPage + (v * 0.5).round(),duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
+          } else {
+            _currentPage = controller.page.toInt();
+            await controller.animateToPage(_currentPage + ((v/v.abs())).round(), duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
+          }
+        }
+        if(controller.page.toInt() == pages.length - 1) {
+          await savePage(-1);
+        } else {
+          print(controller.page.toInt());
+          await savePage(controller.page.toInt());
+        }
+      },
+      child: SmartRefresher(
+        controller: swipeController,
+        enablePullDown: true,
+        enablePullUp: true,
+        onRefresh: () async {
+          print("not");
           if (singleIssue >= 1 && singleIssue < issueHrefs.length){
             singleIssue -= 1;
             reader();
           }
-        }
-        return;
-      },
-      child: PageView (
-        controller: PageController(
-            viewportFraction: 0.99
+          swipeController.refreshCompleted();
+        },
+        onLoading: () async {
+          await savePage(-1);
+          if (singleIssue >= 0 && singleIssue < issueHrefs.length - 1){
+            singleIssue += 1;
+            reader();
+          }
+          swipeController.loadComplete();
+        },
+        child: CustomScrollView(
+          controller: controller,
+          physics: NeverScrollableScrollPhysics(),
+          scrollDirection: Axis.vertical,
+          slivers: <Widget>[
+            SliverList(
+              delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
+                  return pages[index];
+                },
+                childCount: pages.length,
+              ),
+            ),
+          ]
         ),
-        scrollDirection: Axis.vertical,
-        children: pages,
       ),
     );
   }

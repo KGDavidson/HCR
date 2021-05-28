@@ -721,6 +721,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                     singleIssue = issueHrefs.indexOf(issueHref);
                     await Navigator.of(context).push(animatePage(Reader()));
                     setState(() {});
+                    
                   },
                   splashFactory: InkRipple.splashFactory,
                   child: Container(

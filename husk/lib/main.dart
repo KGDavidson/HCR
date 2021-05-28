@@ -707,8 +707,10 @@ class _SingleComicPageState extends State<SingleComicPage> {
   String writer;
   String artist;
   String pubDate;
-  String imageUrl = "";
+  String imageUrl;
   String summary;
+
+  String resumeHref;
 
   bool loading = true;
   bool error = false;
@@ -844,7 +846,8 @@ class _SingleComicPageState extends State<SingleComicPage> {
       }
     }
     List<Widget> singleComicResults = <Widget>[];
-    for (dom.Element issue in issues) {
+    bool first = true;
+    for (dom.Element issue in reversedList ? issues.reversed.toList() : issues) {
       String issueNumber;
       try {
         issueNumber = issue.getElementsByTagName("td")[0].text.split("#")[1].trim();
@@ -855,6 +858,10 @@ class _SingleComicPageState extends State<SingleComicPage> {
       String issueHref = issue.getElementsByTagName("td")[0].getElementsByTagName("a")[0].attributes["href"];
       issueHrefs.add(issueHref);
       if (showRead | !issuesRead[issueHrefs.indexOf(issueHref)]) {
+        if (first) {
+          resumeHref = issue.getElementsByTagName("td")[0].getElementsByTagName("a")[0].attributes["href"];
+          first = false;
+        }
         singleComicResults.add(
           Container(
             padding: EdgeInsets.fromLTRB(10, 2, 10, 0),
@@ -983,9 +990,6 @@ class _SingleComicPageState extends State<SingleComicPage> {
         );
       }
     }
-    if (reversedList) {
-      singleComicResults = singleComicResults.reversed.toList();
-    }
     return singleComicResults;
   }
 
@@ -1028,150 +1032,158 @@ class _SingleComicPageState extends State<SingleComicPage> {
                       width: double.maxFinite,
                       child: Card(
                         elevation: 5,
-                        child: Stack(
-                          children: <Widget>[
-                            Column(
-                              children: <Widget>[
-                                Container(
-                                  height: 170,
-                                  margin: EdgeInsets.fromLTRB(10,10,10,10),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: <Widget>[
-                                      Container(
-                                        decoration: BoxDecoration(
-                                            border: Border.all(
-                                              color: Colors.black,
-                                              width: 5,
-                                            )
+                        child: InkWell(
+                          onTap: () async {
+                            singleIssue = issueHrefs.indexOf(resumeHref);
+                            await Navigator.of(context).push(animatePage(Reader()));
+                            setState(() {});
+                          },
+                          splashFactory: InkRipple.splashFactory,
+                          child: Stack(
+                            children: <Widget>[
+                              Column(
+                                children: <Widget>[
+                                  Container(
+                                    height: 170,
+                                    margin: EdgeInsets.fromLTRB(10,10,10,10),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.max,
+                                      children: <Widget>[
+                                        Container(
+                                          decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: Colors.black,
+                                                width: 5,
+                                              )
+                                          ),
+                                          height: double.maxFinite,
+                                          child: FadeInImage.assetNetwork(
+                                              placeholder: 'assets/loading.png',
+                                              image: imageUrl
+                                          ),
                                         ),
-                                        height: double.maxFinite,
-                                        child: FadeInImage.assetNetwork(
-                                            placeholder: 'assets/loading.png',
-                                            image: imageUrl
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          children: <Widget>[
-                                            Expanded(
-                                              child: Container(
-                                                alignment: Alignment.center,
-                                                margin: EdgeInsets.fromLTRB(20,20,20,20),
-                                                child: Text(
-                                                  singleComicName,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 22,
+                                        Expanded(
+                                          child: Column(
+                                            children: <Widget>[
+                                              Expanded(
+                                                child: Container(
+                                                  alignment: Alignment.center,
+                                                  margin: EdgeInsets.fromLTRB(20,20,20,20),
+                                                  child: Text(
+                                                    singleComicName,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 22,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                alignment: Alignment.topLeft,
-                                                margin: EdgeInsets.fromLTRB(20,0,20,0),
-                                                child: Column(
-                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: <Widget>[
-                                                    Text(
-                                                      publisher,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      textAlign: TextAlign.left,
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 15,
+                                              Expanded(
+                                                child: Container(
+                                                  alignment: Alignment.topLeft,
+                                                  margin: EdgeInsets.fromLTRB(20,0,20,0),
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: <Widget>[
+                                                      Text(
+                                                        publisher,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.left,
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 15,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Text(
-                                                      writer,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      textAlign: TextAlign.left,
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 15,
+                                                      Text(
+                                                        writer,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.left,
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 15,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Text(
-                                                      artist,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      textAlign: TextAlign.left,
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 15,
+                                                      Text(
+                                                        artist,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.left,
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 15,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Text(
-                                                      pubDate,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      textAlign: TextAlign.left,
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 15,
+                                                      Text(
+                                                        pubDate,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.left,
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 15,
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      )
-                                    ],
+                                              )
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                Container(
-                                  height: 50,
-                                  margin: EdgeInsets.fromLTRB(10,0,10,10),
-                                  child: Text(
-                                    summary,
-                                  ),
-                                )
-                              ],
-                            ),
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: IconButton(
-                                  onPressed: () async {
-                                    List<dynamic> comicData = [
-                                      imageUrl,
+                                  Container(
+                                    height: 50,
+                                    margin: EdgeInsets.fromLTRB(10,0,10,10),
+                                    child: Text(
                                       summary,
-                                      singleComicHref,
-                                    ];
-
-                                    final prefs = await SharedPreferences.getInstance();
-                                    String savedComics = prefs.getString("saved");
-                                    Map<String, dynamic> savedComicsData;
-                                    try{
-                                      savedComicsData = json.decode(savedComics);
-                                    } catch (e) {print(e);}
-
-                                    if (savedComicsData == null){
-                                      savedComicsData = <String, List<dynamic>>{};
-                                    }
-                                    if (singleComicSaved){
-                                      savedComicsData.remove(singleComicName);
-                                    } else {
-                                      savedComicsData[singleComicName] = comicData;
-                                    }
-                                    prefs.setString('saved', json.encode(savedComicsData));
-                                    singleComicSaved = !singleComicSaved;
-                                    setState(() {});
-                                  },
-                                  icon: singleComicSaved ? Icon(
-                                    Icons.favorite,
-                                    color: Colors.red,
-                                  ) : Icon(
-                                    Icons.favorite_border,
-                                    color: Colors.red,
+                                    ),
                                   )
+                                ],
                               ),
-                            )
-                          ],
-                        ),
+                              Align(
+                                alignment: Alignment.topRight,
+                                child: IconButton(
+                                    onPressed: () async {
+                                      List<dynamic> comicData = [
+                                        imageUrl,
+                                        summary,
+                                        singleComicHref,
+                                      ];
+
+                                      final prefs = await SharedPreferences.getInstance();
+                                      String savedComics = prefs.getString("saved");
+                                      Map<String, dynamic> savedComicsData;
+                                      try{
+                                        savedComicsData = json.decode(savedComics);
+                                      } catch (e) {print(e);}
+
+                                      if (savedComicsData == null){
+                                        savedComicsData = <String, List<dynamic>>{};
+                                      }
+                                      if (singleComicSaved){
+                                        savedComicsData.remove(singleComicName);
+                                      } else {
+                                        savedComicsData[singleComicName] = comicData;
+                                      }
+                                      prefs.setString('saved', json.encode(savedComicsData));
+                                      singleComicSaved = !singleComicSaved;
+                                      setState(() {});
+                                    },
+                                    icon: singleComicSaved ? Icon(
+                                      Icons.favorite,
+                                      color: Colors.red,
+                                    ) : Icon(
+                                      Icons.favorite_border,
+                                      color: Colors.red,
+                                    )
+                                ),
+                              )
+                            ],
+                          ),
+                        )
                       ),
                     ),
                     Container(
@@ -1318,6 +1330,12 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
     super.initState();
     _controller = AnimationController(vsync: this, duration: Duration(seconds: 2))..repeat();
     reader();
+  }
+
+  @override
+  dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void reader() async {

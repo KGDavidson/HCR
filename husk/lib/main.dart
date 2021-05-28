@@ -1118,6 +1118,7 @@ class _ReaderState extends State<Reader> {
   int _currentPage = 0;
   int t;
   double p;
+  int pointerCount = 0;
 
   List<Widget> pages = <Widget>[];
 
@@ -1168,6 +1169,7 @@ class _ReaderState extends State<Reader> {
                 width: MediaQuery.of(context).size.width,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     InteractiveViewer(
                       child: FadeInImage.assetNetwork(
@@ -1228,12 +1230,17 @@ class _ReaderState extends State<Reader> {
           semanticLabel: 'Error loading search results',
         )
     ) : Listener(
+      onPointerDown: (pos) {
+        pointerCount += 1;
+      },
+      onPointerUp: (pos) {
+        pointerCount -= 1;
+      },
       onPointerMove: (pos) async {
-        print(pos.size);
         if (t == null || DateTime.now().millisecondsSinceEpoch - t > 100) {
           t = DateTime.now().millisecondsSinceEpoch;
           p = pos.position.dy; //x position
-        } else {
+        } else if (pointerCount == 1) {
           //Calculate velocity
           double v = (p - pos.position.dy) / (DateTime.now().millisecondsSinceEpoch - t);
           if (v < -1 || v > 1) {
@@ -1244,7 +1251,6 @@ class _ReaderState extends State<Reader> {
         if(controller.page.toInt() == pages.length - 1) {
           await savePage(-1);
         } else {
-          print(controller.page.toInt());
           await savePage(controller.page.toInt());
         }
       },

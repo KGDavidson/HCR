@@ -1049,10 +1049,6 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                 child: Text("Download All"),
                                 style: ElevatedButton.styleFrom(
                                     primary: Color(0xff00c8f0),
-                                    side: BorderSide(
-                                        width: 1.5,
-                                        color: Colors.black
-                                    )
                                 ),
                               ),
                               Row(
@@ -1060,11 +1056,54 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: <Widget>[
                                   IconButton(
+                                    padding: EdgeInsets.all(0),
                                     onPressed: (){
                                       reversedList = !reversedList;
                                       setState(() {});
                                     },
-                                    icon: reversedList ? Icon(Icons.keyboard_arrow_up) : Icon(Icons.keyboard_arrow_down),
+                                    icon: !reversedList ? Stack(
+                                      children: <Widget>[
+                                        Positioned(
+                                            top: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_up,
+                                              color: Color(0xff00c8f0),
+                                            )
+                                        ),
+                                        Positioned(
+                                            bottom: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_down,
+                                              color: Colors.blueGrey,
+                                            )
+                                        )
+                                      ],
+                                    ) : Stack(
+                                      children: <Widget>[
+                                        Positioned(
+                                            top: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_up,
+                                              color: Colors.blueGrey,
+                                            )
+                                        ),
+                                        Positioned(
+                                            bottom: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_down,
+                                              color: Color(0xff00c8f0),
+                                            )
+                                        )
+                                      ],
+                                    ),
                                   ),
                                   IconButton(
                                     onPressed: () {

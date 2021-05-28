@@ -7,7 +7,6 @@ import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:snapping_page_scroll/snapping_page_scroll.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 //import 'package:flutter/rendering.dart';
 
@@ -196,9 +195,10 @@ class _LibraryPageState extends State<LibraryPage> {
                 elevation: 5,
                 child: InkWell(
                   splashFactory: InkRipple.splashFactory,
-                  onTap: () {
+                  onTap: () async {
                     singleComicHref = comicHref;
-                    Navigator.of(context).push(animatePage(SingleComicPage()));
+                    await Navigator.of(context).push(animatePage(SingleComicPage()));
+                    library();
                   },
                   child: Container(
                     margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
@@ -300,9 +300,10 @@ class _LibraryPageState extends State<LibraryPage> {
                         width: double.maxFinite,
                         child: TextField(
                           textInputAction: TextInputAction.search,
-                          onSubmitted: (value) {
+                          onSubmitted: (value) async {
                             searchString = value;
-                            Navigator.of(context).push(animatePage(SearchPage()));
+                            await Navigator.of(context).push(animatePage(SearchPage()));
+                            library();
                           },
                           decoration: InputDecoration(
                             fillColor: Colors.white,
@@ -560,10 +561,10 @@ class _SingleComicPageState extends State<SingleComicPage> {
   String writer;
   String artist;
   String pubDate;
-  String imageUrl;
+  String imageUrl = "";
   String summary;
 
-  bool loading = false;
+  bool loading = true;
   bool error = false;
 
   bool singleComicSaved = false;
@@ -572,6 +573,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
   bool showDownloaded = false;
 
   RefreshController refreshController = RefreshController(initialRefresh: false);
+  ScrollController listController = ScrollController();
 
   @override
   void initState() {
@@ -581,10 +583,6 @@ class _SingleComicPageState extends State<SingleComicPage> {
 
   void loadComic() async {
     prefs = await SharedPreferences.getInstance();
-    setState(() {
-      loading = true;
-      error = false;
-    });
 
     var formData = new Map<String, dynamic>();
     final response = await http.post(Uri.parse(singleComicHref), headers: HEADERS, body: formData);
@@ -719,9 +717,10 @@ class _SingleComicPageState extends State<SingleComicPage> {
             child: Card(
                 elevation: 5,
                 child: InkWell(
-                  onTap: () {
+                  onTap: () async {
                     singleIssue = issueHrefs.indexOf(issueHref);
-                    Navigator.of(context).push(animatePage(Reader()));
+                    await Navigator.of(context).push(animatePage(Reader()));
+                    setState(() {});
                   },
                   splashFactory: InkRipple.splashFactory,
                   child: Container(
@@ -860,7 +859,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
               behavior: HitTestBehavior.translucent,
               onHorizontalDragUpdate: (details) {
                 if (details.delta.dx > 8) {
-                  Navigator.of(context).pop(this);
+                  Navigator.pop(context);
                 }
               },
               child: Container(
@@ -1068,16 +1067,18 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                     icon: reversedList ? Icon(Icons.keyboard_arrow_up) : Icon(Icons.keyboard_arrow_down),
                                   ),
                                   IconButton(
-                                    onPressed: (){
+                                    onPressed: () {
                                       showDownloaded = !showDownloaded;
                                       setState(() {});
+                                      listController.animateTo(0.0, duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
                                     },
                                     icon: showDownloaded ? Icon(Icons.download, color: Color(0xff00c8f0),) : Icon(Icons.download, color: Colors.blueGrey),
                                   ),
                                   IconButton(
-                                    onPressed: (){
+                                    onPressed: () {
                                       showRead = !showRead;
                                       setState(() {});
+                                      listController.animateTo(0.0, duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
                                     },
                                     icon: showRead ? Icon(Icons.album, color: Color(0xff00c8f0),) : Icon(Icons.adjust, color: Colors.blueGrey),
                                   ),
@@ -1098,6 +1099,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                           refreshController.refreshCompleted();
                         },
                         child: ListView(
+                          controller: listController,
                           children: buildIssuesList(),
                         )
                       )

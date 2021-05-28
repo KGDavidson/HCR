@@ -198,13 +198,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
-  scroll_to_index:
-    dependency: "direct main"
-    description:
-      name: scroll_to_index
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.0"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -252,13 +245,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.99"
-  snapping_page_scroll:
-    dependency: "direct main"
-    description:
-      name: snapping_page_scroll
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.1"
   source_span:
     dependency: transitive
     description:

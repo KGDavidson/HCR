@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'dart:math' as math;
 //import 'package:flutter/rendering.dart';
 
 List<Widget> emptyLibrary = <Widget>[
@@ -344,15 +346,15 @@ class _LibraryPageState extends State<LibraryPage> {
                             filled: true,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(100)),
-                              borderSide:  BorderSide(color: Colors.black, width: 5),
+                              borderSide:  BorderSide(color: Colors.blueGrey, width: 5),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(100)),
-                              borderSide:  BorderSide(color: Colors.black, width: 5),
+                              borderSide:  BorderSide(color: Colors.blueGrey, width: 5),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(100)),
-                              borderSide:  BorderSide(color: Colors.black, width: 5),
+                              borderSide:  BorderSide(color: Colors.blueGrey, width: 5),
                             ),
                             contentPadding: EdgeInsets.all(20),
                             hintText: 'Search ...',
@@ -361,7 +363,7 @@ class _LibraryPageState extends State<LibraryPage> {
                         ),
                       ),
                       loading ? Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(color: Color(0xffff99df),),
                       ) : error ? Center(
                           child: Icon(
                             Icons.error_outline,
@@ -627,7 +629,6 @@ class _SearchPageState extends State<SearchPage> {
     searchResults = <Widget>[];
     Map<String, dynamic> savedComicsDataCopy = Map.from(savedComicsData);
     Map<String, dynamic> searchItemsCopy = Map.from(searchItems);
-    print(savedComicsData);
     savedComicsData.removeWhere((key, value) {
       if (searchItems.containsKey(key)) {
         if (savedComicsData[key].length < 4) {
@@ -673,7 +674,7 @@ class _SearchPageState extends State<SearchPage> {
                 child: Container(
                   height: double.maxFinite,
                   child: loading ? Center(
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(color: Color(0xffff99df),),
                   ) : error ? Center(
                       child: Icon(
                         Icons.error_outline,
@@ -1010,7 +1011,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
               child: Container(
                 height: double.maxFinite,
                 child:loading ? Center(
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(color: Color(0xffff99df),),
                 ) : error ? Center(
                     child: Icon(
                       Icons.error_outline,
@@ -1298,13 +1299,14 @@ class _SingleComicPageState extends State<SingleComicPage> {
   }
 }
 
-class _ReaderState extends State<Reader> {
+class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
   PageController controller = PageController();
   RefreshController swipeController = RefreshController(initialRefresh: false);
   int _currentPage = 0;
   int t;
   double p;
   int pointerCount = 0;
+  AnimationController _controller;
 
   List<Widget> pages = <Widget>[];
 
@@ -1314,6 +1316,7 @@ class _ReaderState extends State<Reader> {
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(vsync: this, duration: Duration(seconds: 2))..repeat();
     reader();
   }
 
@@ -1407,7 +1410,7 @@ class _ReaderState extends State<Reader> {
   @override
   Widget build(BuildContext context) {
     return loading ? Center(
-      child: CircularProgressIndicator(),
+      child: CircularProgressIndicator(color: Color(0xffff99df),),
     ) : error ? Center(
         child: Icon(
           Icons.error_outline,
@@ -1440,41 +1443,224 @@ class _ReaderState extends State<Reader> {
           await savePage(controller.page.toInt());
         }
       },
-      child: SmartRefresher(
-        controller: swipeController,
-        enablePullDown: true,
-        enablePullUp: true,
-        onRefresh: () async {
-          print("not");
-          if (singleIssue >= 1 && singleIssue < issueHrefs.length){
-            singleIssue -= 1;
-            reader();
-          }
-          swipeController.refreshCompleted();
+      child: NotificationListener(
+        onNotification: (overscroll) {
+          try{overscroll.disallowGlow();} catch (e) {}
+          return true;
         },
-        onLoading: () async {
-          await savePage(-1);
-          if (singleIssue >= 0 && singleIssue < issueHrefs.length - 1){
-            singleIssue += 1;
-            reader();
-          }
-          swipeController.loadComplete();
-        },
-        child: CustomScrollView(
-          controller: controller,
-          physics: PageScrollPhysics(),
-          scrollDirection: Axis.vertical,
-          slivers: <Widget>[
-            SliverList(
-              delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
-                  return pages[index];
-                },
-                childCount: pages.length,
-              ),
-            ),
-          ]
+        child: SmartRefresher(
+          controller: swipeController,
+          enablePullDown: true,
+          enablePullUp: true,
+          header: CustomHeader(
+            height: 120,
+            builder: (BuildContext context,RefreshStatus mode){
+              Widget body ;
+              if(mode==RefreshStatus.idle){
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Colors.white,
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.arrow_downward, color:Colors.white),
+                    )
+                );
+              }
+              else if(mode==RefreshStatus.refreshing){
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Color(0xffff99df),
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: AnimatedBuilder(
+                        animation: _controller,
+                        builder: (_, child) {
+                          return Transform.rotate(
+                            angle: _controller.value * 2 * math.pi,
+                            child: Icon(Icons.refresh, color:Colors.white),
+                          );
+                        },
+                      ),
+                    )
+                );
+              }
+              else if(mode == RefreshStatus.failed){
+                body = Card(
+                    shape: CircleBorder(),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.error_outline, color:Colors.white),
+                    )
+                );
+              }
+              else if(mode == RefreshStatus.canRefresh){
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Color(0xffff99df),
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.arrow_downward, color:Colors.white),
+                    )
+                );
+              }
+              else{
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Color(0xffff99df),
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.done, color:Colors.white),
+                    )
+                );
+              }
+              return Container(
+                height: 55.0,
+                child: Center(child:body),
+              );
+            },
+          ),
+          footer: CustomFooter(
+            height: 120,
+            builder: (BuildContext context, LoadStatus mode){
+              Widget body ;
+              if(mode==LoadStatus.idle){
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Color(0xffff99df),
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.done, color:Colors.white),
+                    )
+                );
+              }
+              else if(mode==LoadStatus.loading){
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Color(0xffff99df),
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: AnimatedBuilder(
+                        animation: _controller,
+                        builder: (_, child) {
+                          return Transform.rotate(
+                            angle: _controller.value * 2 * math.pi,
+                            child: Icon(Icons.refresh, color:Colors.white),
+                          );
+                        },
+                      ),
+                    )
+                );
+              }
+              else if(mode == LoadStatus.failed){
+                body = Card(
+                    shape: CircleBorder(),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.error_outline, color:Colors.white),
+                    )
+                );
+              }
+              else if(mode == LoadStatus.canLoading){
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Color(0xffff99df),
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.arrow_upward, color:Colors.white),
+                    )
+                );
+              }
+              else{
+                body = Card(
+                    shape: CircleBorder(
+                      side: new BorderSide(
+                        color: Color(0xffff99df),
+                        width: 3,
+                      ),
+                    ),
+                    color: Colors.black,
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      child: Icon(Icons.done, color:Colors.white),
+                    )
+                );
+              }
+              return Container(
+                height: 55.0,
+                child: Center(child:body),
+              );
+            },
+          ),
+          onRefresh: () async {
+            await new Future.delayed(const Duration(milliseconds: 500), () => "1");
+            if (singleIssue >= 1 && singleIssue < issueHrefs.length){
+              singleIssue -= 1;
+              reader();
+            }
+            swipeController.refreshCompleted();
+          },
+          onLoading: () async {
+            await new Future.delayed(const Duration(milliseconds: 500), () => "1");
+            await savePage(-1);
+            if (singleIssue >= 0 && singleIssue < issueHrefs.length - 1){
+              singleIssue += 1;
+              reader();
+            }
+            swipeController.loadComplete();
+          },
+          child: CustomScrollView(
+              controller: controller,
+              physics: PageScrollPhysics(),
+              scrollDirection: Axis.vertical,
+              slivers: <Widget>[
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
+                    return pages[index];
+                  },
+                    childCount: pages.length,
+                  ),
+                ),
+              ]
+          ),
         ),
-      ),
+      )
     );
   }
 }

@@ -311,6 +311,10 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return SafeArea(
         child: Container(
           decoration: BoxDecoration(
@@ -1379,6 +1383,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     InteractiveViewer(
+                      clipBehavior: Clip.none,
                       child: FadeInImage.assetNetwork(
                         image: pageUrl,
                         placeholder: 'assets/loading.png',

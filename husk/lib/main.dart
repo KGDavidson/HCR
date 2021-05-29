@@ -1316,7 +1316,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
 }
 
 class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
-  PageController controller = PageController();
+  PageController controller = PageController(initialPage: 0);
   RefreshController swipeController = RefreshController(initialRefresh: false);
   int _currentPage = 0;
   int t;

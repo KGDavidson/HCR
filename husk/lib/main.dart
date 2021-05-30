@@ -1,15 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'dart:math' as math;
+import 'package:path_provider/path_provider.dart';
 //import 'package:flutter/rendering.dart';
 
 List<Widget> emptyLibrary = <Widget>[
@@ -703,8 +704,12 @@ class _SearchPageState extends State<SearchPage> {
 
 class _SingleComicPageState extends State<SingleComicPage> {
   SharedPreferences prefs;
+  Directory directory;
 
   List<bool> issuesRead = <bool>[];
+  List<bool> issuesDownloading = <bool>[];
+  List<bool> issuesDownloaded = <bool>[];
+  List<Icon> issuesDownloadIcon = <Icon>[];
   List<dom.Element> issues;
 
   String publisher;
@@ -735,9 +740,9 @@ class _SingleComicPageState extends State<SingleComicPage> {
 
   void loadComic() async {
     prefs = await SharedPreferences.getInstance();
+    directory = await getApplicationDocumentsDirectory();
 
-    var formData = new Map<String, dynamic>();
-    final response = await http.post(Uri.parse(singleComicHref), headers: HEADERS, body: formData);
+    final response = await http.get(Uri.parse(singleComicHref), headers: HEADERS);
     if (response.statusCode == 200) {
       dom.Document doc = html.parse(response.body);
       issues = doc.getElementsByClassName("listing")[0].getElementsByTagName("tr");
@@ -790,6 +795,21 @@ class _SingleComicPageState extends State<SingleComicPage> {
 
       issues = issues.reversed.toList();
       issuesRead = List<bool>.filled(issues.length, false);
+      issuesDownloading = List<bool>.filled(issues.length, false);
+      issuesDownloadIcon = List<Icon>.filled(issues.length, Icon(Icons.download, color: Colors.blueGrey,));
+      issuesDownloaded = List<bool>.filled(issues.length, false);
+
+      String directoryPath = directory.path;
+      try {
+        Directory('$directoryPath/$singleComicName').listSync().forEach((element) {
+          int issueNumber = int.parse(element.path
+              .split("/")
+              .last);
+          if (!issuesDownloading[issueNumber]) {
+            issuesDownloaded[issueNumber] = true;
+          }
+        });
+      } catch(e){}
 
       String savedComics;
       savedComics = prefs.getString("saved");
@@ -826,7 +846,78 @@ class _SingleComicPageState extends State<SingleComicPage> {
     setState(() {});
   }
 
-  List<Widget> buildIssuesList(){
+  void delete(issueHref) async {
+    final issueNumber = issueHrefs.indexOf(issueHref);
+    final directoryPath = directory.path;
+    final dir = Directory('$directoryPath/$singleComicName/$issueNumber');
+    dir.deleteSync(recursive: true);
+    issuesDownloading[issueHrefs.indexOf(issueHref)] = true;
+    setState(() {});
+    await Future.delayed(Duration(seconds: 1));
+    issuesDownloading[issueHrefs.indexOf(issueHref)] = false;
+    issuesDownloaded[issueHrefs.indexOf(issueHref)] = false;
+    setState(() {});
+  }
+
+  void download(String issueHref) async {
+    final response = await http.get(Uri.parse("https://readcomiconline.li/" + issueHref + "&quality=hq"), headers: HEADERS);
+    if (response.statusCode == 200){
+      try {
+        String html = response.body;
+        String pagesJS = html.split("var lstImages = new Array();")[1].split("var currImage = 0;")[0];
+        List<String> pageSplit = pagesJS.split('lstImages.push("');
+        for (int i = 0; i < pageSplit.length; i++) {
+          String pageUrl = pageSplit[i].split('"')[0];
+          if (Uri.parse(pageUrl).isAbsolute) {
+            print(pageUrl);
+            final response = await http.get(Uri.parse(pageUrl));
+            if (response.contentLength == 0){
+              return;
+            }
+            String directoryPath = directory.path;
+            int issueNumber = issueHrefs.indexOf(issueHref);
+            File file = await new File('$directoryPath/$singleComicName/$issueNumber/$i.png').create(recursive: true);
+            await file.writeAsBytes(response.bodyBytes);
+          }
+        }
+
+        print(directory.listSync());
+        issuesDownloaded[issueHrefs.indexOf(issueHref)] = true;
+        issuesDownloading[issueHrefs.indexOf(issueHref)] = false;
+        setState(() {});
+        return;
+      } catch(e) {print(e);}
+    }
+    print("fail");
+    issuesDownloading[issueHrefs.indexOf(issueHref)] = false;
+    issuesDownloadIcon[issueHrefs.indexOf(issueHref)] = Icon(Icons.error_outline, color: Colors.red,);
+    if (mounted){setState(() {});}
+    await Future.delayed(Duration(seconds: 2));
+    issuesDownloadIcon[issueHrefs.indexOf(issueHref)] = Icon(Icons.download, color: Colors.blueGrey);
+    if (mounted){setState(() {});}
+
+    /*final response = await http.get(Uri.parse("https://2.bp.blogspot.com/ZvwGl14n1bI-tB3OzSi034N6gLlIp5nJKegIlceVY-txW6-4wStSowGB-7bl4qetLD2wHT9h0z6ClzyoXMANSNLGgVHjMo_dKIEPUl0cjMgf-0X84tTMQseJhnEO6VxLTFw7e4yhmQ=s1600"));
+
+    if (response.contentLength == 0){
+      return;
+    }
+    String directoryPath = directory.path;
+    File file = new File('$directoryPath/01.png');
+    await file.writeAsBytes(response.bodyBytes);*/
+  }
+
+  List<Widget> buildIssuesList() {
+    String directoryPath = directory.path;
+    try {
+      Directory('$directoryPath/$singleComicName').listSync().forEach((element) {
+        int issueNumber = int.parse(element.path
+            .split("/")
+            .last);
+        if (!issuesDownloading[issueNumber]) {
+          issuesDownloaded[issueNumber] = true;
+        }
+      });
+    } catch(e){}
     String savedComics;
     savedComics = prefs.getString("saved");
     singleComicSaved = false;
@@ -921,14 +1012,27 @@ class _SingleComicPageState extends State<SingleComicPage> {
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
-                            IconButton(
+                            issuesDownloading[issueHrefs.indexOf(issueHref)] ?
+                            Container(
+                              padding: EdgeInsets.only(left: 13, right:13),
+                              child: SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(color: Color(0xff00c8f0),),
+                              )
+                            ) :
+                            issuesDownloaded[issueHrefs.indexOf(issueHref)] ? IconButton(
                                 onPressed: () {
-
+                                  //delete(issueHref);
                                 },
-                                icon: Icon(
-                                  Icons.download,
-                                  color: Colors.blueGrey,
-                                )
+                                icon: Icon(Icons.delete_forever, color: Color(0xffFF99DF),)
+                            ) : IconButton(
+                                onPressed: () {
+                                  //issuesDownloading[issueHrefs.indexOf(issueHref)] = true;
+                                  //setState(() {});
+                                  //download(issueHref);
+                                },
+                                icon: issuesDownloadIcon[issueHrefs.indexOf(issueHref)]
                             ),
                             IconButton(
                                 onPressed: () async {
@@ -1364,8 +1468,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
       error = false;
     });
 
-    var formData = new Map<String, dynamic>();
-    final response = await http.post(Uri.parse("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq"), headers: HEADERS, body: formData);
+    final response = await http.get(Uri.parse("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq"), headers: HEADERS);
     if (response.statusCode == 200){
       String html = response.body;
       String pagesJS = html.split("var lstImages = new Array();")[1].split("var currImage = 0;")[0];

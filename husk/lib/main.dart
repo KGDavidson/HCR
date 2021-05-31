@@ -704,7 +704,6 @@ class _SearchPageState extends State<SearchPage> {
 
 class _SingleComicPageState extends State<SingleComicPage> {
   SharedPreferences prefs;
-  Directory directory;
 
   List<bool> issuesRead = <bool>[];
   List<bool> issuesDownloading = <bool>[];
@@ -740,7 +739,6 @@ class _SingleComicPageState extends State<SingleComicPage> {
 
   void loadComic() async {
     prefs = await SharedPreferences.getInstance();
-    directory = await getApplicationDocumentsDirectory();
 
     final response = await http.get(Uri.parse(singleComicHref), headers: HEADERS);
     if (response.statusCode == 200) {
@@ -799,18 +797,6 @@ class _SingleComicPageState extends State<SingleComicPage> {
       issuesDownloadIcon = List<Icon>.filled(issues.length, Icon(Icons.download, color: Colors.blueGrey,));
       issuesDownloaded = List<bool>.filled(issues.length, false);
 
-      String directoryPath = directory.path;
-      try {
-        Directory('$directoryPath/$singleComicName').listSync().forEach((element) {
-          int issueNumber = int.parse(element.path
-              .split("/")
-              .last);
-          if (!issuesDownloading[issueNumber]) {
-            issuesDownloaded[issueNumber] = true;
-          }
-        });
-      } catch(e){}
-
       String savedComics;
       savedComics = prefs.getString("saved");
       singleComicSaved = false;
@@ -846,7 +832,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
     setState(() {});
   }
 
-  void delete(issueHref) async {
+  /*void delete(issueHref) async {
     final issueNumber = issueHrefs.indexOf(issueHref);
     final directoryPath = directory.path;
     final dir = Directory('$directoryPath/$singleComicName/$issueNumber');
@@ -857,9 +843,9 @@ class _SingleComicPageState extends State<SingleComicPage> {
     issuesDownloading[issueHrefs.indexOf(issueHref)] = false;
     issuesDownloaded[issueHrefs.indexOf(issueHref)] = false;
     setState(() {});
-  }
+  }*/
 
-  void download(String issueHref) async {
+  /*void download(String issueHref) async {
     final response = await http.get(Uri.parse("https://readcomiconline.li/" + issueHref + "&quality=hq"), headers: HEADERS);
     if (response.statusCode == 200){
       try {
@@ -904,20 +890,9 @@ class _SingleComicPageState extends State<SingleComicPage> {
     String directoryPath = directory.path;
     File file = new File('$directoryPath/01.png');
     await file.writeAsBytes(response.bodyBytes);*/
-  }
+  }*/
 
   List<Widget> buildIssuesList() {
-    String directoryPath = directory.path;
-    try {
-      Directory('$directoryPath/$singleComicName').listSync().forEach((element) {
-        int issueNumber = int.parse(element.path
-            .split("/")
-            .last);
-        if (!issuesDownloading[issueNumber]) {
-          issuesDownloaded[issueNumber] = true;
-        }
-      });
-    } catch(e){}
     String savedComics;
     savedComics = prefs.getString("saved");
     singleComicSaved = false;

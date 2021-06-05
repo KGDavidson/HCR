@@ -1832,6 +1832,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
           ),
           onRefresh: () async {
             controller = PageController(initialPage: 0);
+
             await new Future.delayed(const Duration(milliseconds: 500), () => "1");
             if (singleIssue >= 1 && singleIssue < issueHrefs.length){
               singleIssue -= 1;
@@ -1841,6 +1842,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
           },
           onLoading: () async {
             controller = PageController(initialPage: 0);
+            
             await new Future.delayed(const Duration(milliseconds: 500), () => "1");
             await savePage(-1);
             if (singleIssue >= 0 && singleIssue < issueHrefs.length - 1){

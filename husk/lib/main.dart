@@ -13,13 +13,18 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:path_provider/path_provider.dart';
 //import 'package:flutter/rendering.dart';
 
+List<Widget> libraryItems = emptyLibrary;
+List<Widget> searchResults = emptyContainer;
+
+String currentSearchString = "";
+
 const TRANSPARENT = Colors.transparent;
 
 const MAIN_COLOUR_1 = Color(0xffFF99DF);
 const MAIN_COLOUR_2 = Color(0xff00C8F0);
 const LIKE_COLOUR = Colors.red;
 
-const PROGRESS_INDICATOR_COLOUR = MAIN_COLOUR_2;
+const PROGRESS_INDICATOR_COLOUR = MAIN_COLOUR_1;
 const ERROR_COLOUR = Colors.red;
 const DELETE_COLOUR = Colors.red;
 
@@ -88,6 +93,14 @@ List<Widget> emptyLibrary = <Widget>[
   ),
 ];
 
+List<Widget> emptyContainer = <Widget>[
+  Container(
+    padding: EdgeInsets.fromLTRB(10,10,10,0),
+    height: 150,
+    width: double.maxFinite,
+  )
+];
+
 const Map<String, String> HEADERS = <String, String>{
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
   'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -108,7 +121,6 @@ const Map<String, String> HEADERS = <String, String>{
 };
 const Duration animationDuration = Duration(milliseconds: 200);
 
-String searchString;
 String singleComicHref;
 List<String> issueHrefs;
 String singleComicName;
@@ -182,7 +194,7 @@ Route animatePage(page) {
   );
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage>{
   @override
   void initState() {
     // TODO: implement initState
@@ -245,7 +257,6 @@ class _MainPageState extends State<MainPage> {
 
 class _LibraryPageState extends State<LibraryPage> {
   SharedPreferences prefs;
-  List<Widget> libraryItems = <Widget>[];
   ScrollController listController = ScrollController();
   Map<String, List<dynamic>> savedComicsData;
 
@@ -284,7 +295,6 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   List<Widget> buildLibraryItems() {
-    libraryItems = emptyLibrary;
     String savedComics;
     savedComics = prefs.getString("saved");
     Map<String, List<dynamic>> savedComicsData;
@@ -456,9 +466,9 @@ class _LibraryPageState extends State<LibraryPage> {
                             child: TextField(
                               textInputAction: TextInputAction.search,
                               onSubmitted: (value) async {
-                                searchString = value;
-                                await Navigator.of(context).push(animatePage(SearchPage()));
-                                library();
+                                //searchString = value;
+                                //await Navigator.of(context).push(animatePage(SearchPage()));
+                                //library();
                               },
                               decoration: InputDecoration(
                                 fillColor: PRIMARY_WHITE,
@@ -596,8 +606,8 @@ class _LibraryPageState extends State<LibraryPage> {
 class _SearchPageState extends State<SearchPage> {
   SharedPreferences prefs;
 
+  ScrollController listController = ScrollController();
   Map<String, List<String>> searchItems = <String, List<String>>{};
-  List<Widget> searchResults = <Widget>[];
   Map<String, bool> searchItemsSaved = <String, bool>{};
 
   bool loading = false;
@@ -606,10 +616,12 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    search();
+    //search();
   }
 
-  void search() async {
+  void search(searchString) async {
+    currentSearchString = searchString;
+    searchItems = <String, List<String>>{};
     setState(() {
       loading = true;
       error = false;
@@ -667,12 +679,11 @@ class _SearchPageState extends State<SearchPage> {
   void buildListPart(Map<String, dynamic> map, bool saved) {
     for (MapEntry<String, dynamic> searchItem in map.entries) {
       String comicName = searchItem.key;
+      print(comicName);
       String comicHref = searchItem.value[2];
       String latestIssue = searchItem.value[3];
       String description = searchItem.value[1];
       String imageUrl = searchItem.value[0];
-      print(comicName);
-      print(comicHref);
       searchItemsSaved[comicName] = saved;
       searchResults.add(
         Container(
@@ -810,21 +821,29 @@ class _SearchPageState extends State<SearchPage> {
         ),
       );
     }
+    print("complete");
   }
 
   List<Widget> buildSearchResultsList() {
-    String savedComics = prefs.getString("saved");
-    Map<String, dynamic> savedComicsData;
+    String savedComics;
+    try {
+       savedComics = prefs.getString("saved");
+    }
+    catch (e) {
+      return searchResults;
+    }
+    Map<String, dynamic> savedComicsData = Map<String, dynamic>();
     try {
       savedComicsData = json.decode(savedComics);
     } catch (e) {
       print(e);
     }
 
+    print("test");
+
     if (savedComicsData == null) {
       savedComicsData = <String, List<dynamic>>{};
     }
-    searchResults = <Widget>[];
     Map<String, dynamic> savedComicsDataCopy = Map.from(savedComicsData);
     Map<String, dynamic> searchItemsCopy = Map.from(searchItems);
     savedComicsData.removeWhere((key, value) {
@@ -844,7 +863,8 @@ class _SearchPageState extends State<SearchPage> {
       }
       return false;
     });
-    buildListPart(savedComicsData, true);
+    searchResults = <Widget>[];
+    //buildListPart(savedComicsData, true);
     buildListPart(searchItemsCopy, false);
     return searchResults;
   }
@@ -853,36 +873,71 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-      backgroundColor: TRANSPARENT,
-      body: Center(
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onHorizontalDragUpdate: (details) {
-            if (details.delta.dx > 8) {
-              Navigator.of(context).pop(this);
-            }
-          },
-          child: Container(
-            height: double.maxFinite,
-            child: loading ? Center(
-              child: CircularProgressIndicator(color: Color(0xffff99df),),
-            ) : error ? Center(
-                child: Icon(
-                  Icons.error_outline,
-                  color: ERROR_COLOUR,
-                  size: 50.0,
-                  semanticLabel: 'Error loading search results',
+        backgroundColor: TRANSPARENT,
+        body: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Expanded(
+                      child: Container(
+                        height: 60,
+                        margin: EdgeInsets.fromLTRB(20, 10, 20, 0),
+                        child: TextFormField(
+                          textInputAction: TextInputAction.search,
+                          onFieldSubmitted: (value) async {
+                            search(value);
+                          },
+                          initialValue: currentSearchString,
+                          decoration: InputDecoration(
+                            fillColor: PRIMARY_WHITE,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(100)),
+                              borderSide:  BorderSide(color: SECONDARY_BUTTON_COLOUR, width: 5),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(100)),
+                              borderSide:  BorderSide(color: SECONDARY_BUTTON_COLOUR, width: 5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(100)),
+                              borderSide:  BorderSide(color: SECONDARY_BUTTON_COLOUR, width: 5),
+                            ),
+                            contentPadding: EdgeInsets.all(20),
+                            hintText: 'Search ...',
+                            hasFloatingPlaceholder: false,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 150,
+                  child: loading ? Center(
+                    child: CircularProgressIndicator(color: PROGRESS_INDICATOR_COLOUR),
+                  ) : error ? Center(
+                      child: Icon(
+                        Icons.error_outline,
+                        color: ERROR_COLOUR,
+                        size: 50.0,
+                        semanticLabel: 'Error loading search results',
+                      )
+                  ) : ListView (
+                    controller: listController,
+                    children: buildSearchResultsList(),
+                  ),
                 )
-            ) : SingleChildScrollView(
-              child: Column (
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: buildSearchResultsList(),
-              ),
+              ],
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }

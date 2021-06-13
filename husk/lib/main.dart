@@ -13,8 +13,10 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:path_provider/path_provider.dart';
 //import 'package:flutter/rendering.dart';
 
-List<Widget> libraryItems = emptyLibrary;
-List<Widget> searchResults = emptyContainer;
+SharedPreferences prefs;
+
+Map<String, List<dynamic>> savedComicsData;
+Map<String, List<String>> searchItems = <String, List<String>>{};
 
 String currentSearchString = "";
 
@@ -197,8 +199,12 @@ Route animatePage(page) {
 class _MainPageState extends State<MainPage>{
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    getPrefs();
+  }
+
+  getPrefs() async {
+    prefs = await SharedPreferences.getInstance();
   }
 
   @override
@@ -226,7 +232,7 @@ class _MainPageState extends State<MainPage>{
                     labelColor: PRIMARY_WHITE,
                     unselectedLabelColor: SECONDARY_WHITE,
                     indicatorSize: TabBarIndicatorSize.tab,
-                    indicatorColor: SECONDARY_BUTTON_COLOUR,
+                    indicatorColor: MAIN_COLOUR_1,
                     tabs: [
                       Tab(
                         icon: Icon(Icons.local_library_rounded),
@@ -256,9 +262,8 @@ class _MainPageState extends State<MainPage>{
 }
 
 class _LibraryPageState extends State<LibraryPage> {
-  SharedPreferences prefs;
   ScrollController listController = ScrollController();
-  Map<String, List<dynamic>> savedComicsData;
+  List<Widget> libraryItems = emptyLibrary;
   String searchString = "";
 
   bool loading = true;
@@ -505,7 +510,7 @@ class _LibraryPageState extends State<LibraryPage> {
                             elevation: 5,
                             child: Container(
                               margin: EdgeInsets.fromLTRB(0,7,0,7),
-                              padding: EdgeInsets.fromLTRB(10,0,10,0),
+                              padding: EdgeInsets.fromLTRB(0,0,0,0),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: <Widget>[
@@ -610,19 +615,17 @@ class _LibraryPageState extends State<LibraryPage> {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  SharedPreferences prefs;
-
   ScrollController listController = ScrollController();
-  Map<String, List<String>> searchItems = <String, List<String>>{};
   Map<String, bool> searchItemsSaved = <String, bool>{};
+  List<Widget> searchResults = emptyContainer;
 
   bool loading = false;
   bool error = false;
+  bool showLibraryItems = true;
 
   @override
   void initState() {
     super.initState();
-    //search();
   }
 
   void search(searchString) async {
@@ -632,8 +635,6 @@ class _SearchPageState extends State<SearchPage> {
       loading = true;
       error = false;
     });
-
-    prefs = await SharedPreferences.getInstance();
 
     var uri = Uri.parse("https://readcomiconline.li/Search/Comic");
     var formData = new Map<String, dynamic>();
@@ -685,7 +686,6 @@ class _SearchPageState extends State<SearchPage> {
   void buildListPart(Map<String, dynamic> map, bool saved) {
     for (MapEntry<String, dynamic> searchItem in map.entries) {
       String comicName = searchItem.key;
-      print(comicName);
       String comicHref = searchItem.value[2];
       String latestIssue = searchItem.value[3];
       String description = searchItem.value[1];
@@ -827,7 +827,6 @@ class _SearchPageState extends State<SearchPage> {
         ),
       );
     }
-    print("complete");
   }
 
   List<Widget> buildSearchResultsList() {
@@ -835,17 +834,11 @@ class _SearchPageState extends State<SearchPage> {
     try {
        savedComics = prefs.getString("saved");
     }
-    catch (e) {
-      return searchResults;
-    }
+    catch (e) {return searchResults;}
     Map<String, dynamic> savedComicsData = Map<String, dynamic>();
     try {
       savedComicsData = json.decode(savedComics);
-    } catch (e) {
-      print(e);
-    }
-
-    print("test");
+    } catch (e) {}
 
     if (savedComicsData == null) {
       savedComicsData = <String, List<dynamic>>{};
@@ -870,7 +863,10 @@ class _SearchPageState extends State<SearchPage> {
       return false;
     });
     searchResults = <Widget>[];
-    //buildListPart(savedComicsData, true);
+    print(savedComicsData);
+    if (showLibraryItems) {
+      buildListPart(savedComicsData, true);
+    }
     buildListPart(searchItemsCopy, false);
     return searchResults;
   }
@@ -892,7 +888,7 @@ class _SearchPageState extends State<SearchPage> {
                     Expanded(
                       child: Container(
                         height: 60,
-                        margin: EdgeInsets.fromLTRB(20, 10, 20, 0),
+                        margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
                         child: TextFormField(
                           textInputAction: TextInputAction.search,
                           onFieldSubmitted: (value) async {
@@ -917,6 +913,30 @@ class _SearchPageState extends State<SearchPage> {
                             contentPadding: EdgeInsets.all(20),
                             hintText: 'Search ...',
                             hasFloatingPlaceholder: false,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.fromLTRB(10,10,10,0),
+                      height: 70,
+                      child: Card(
+                        elevation: 5,
+                        child: Container(
+                          margin: EdgeInsets.fromLTRB(0,7,0,7),
+                          padding: EdgeInsets.fromLTRB(0,0,0,0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              IconButton(
+                                onPressed: () {
+                                  showLibraryItems = !showLibraryItems;
+                                  setState(() {});
+                                  listController.animateTo(0.0, duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
+                                },
+                                icon: showLibraryItems ? Icon(Icons.favorite, color: LIKE_COLOUR,) : Icon(Icons.favorite_outline, color: LIKE_COLOUR),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -949,8 +969,6 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 class _SingleComicPageState extends State<SingleComicPage> {
-  SharedPreferences prefs;
-
   List<bool> issuesRead = <bool>[];
   List<bool> issuesDownloading = <bool>[];
   List<bool> issuesDownloaded = <bool>[];

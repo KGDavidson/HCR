@@ -259,6 +259,7 @@ class _LibraryPageState extends State<LibraryPage> {
   SharedPreferences prefs;
   ScrollController listController = ScrollController();
   Map<String, List<dynamic>> savedComicsData;
+  String searchString = "";
 
   bool loading = true;
   bool error = false;
@@ -317,7 +318,8 @@ class _LibraryPageState extends State<LibraryPage> {
             }
           });
         }
-        if (unread | showRead) {
+        bool include = (searchString == "" || comicName.toLowerCase().contains(searchString.toLowerCase().trim()));
+        if ((unread | showRead) && include) {
           libraryItems.add(
             Container(
               padding: EdgeInsets.fromLTRB(10, 10, 10, 0),
@@ -465,6 +467,10 @@ class _LibraryPageState extends State<LibraryPage> {
                             margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
                             child: TextField(
                               textInputAction: TextInputAction.search,
+                              onChanged: (value) {
+                                searchString = value;
+                                setState(() {});
+                              },
                               onSubmitted: (value) async {
                                 //searchString = value;
                                 //await Navigator.of(context).push(animatePage(SearchPage()));

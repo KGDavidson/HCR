@@ -13,6 +13,25 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:path_provider/path_provider.dart';
 //import 'package:flutter/rendering.dart';
 
+const TRANSPARENT = Colors.transparent;
+
+const MAIN_COLOUR_1 = Color(0xffFF99DF);
+const MAIN_COLOUR_2 = Color(0xff00C8F0);
+const LIKE_COLOUR = Colors.red;
+
+const PROGRESS_INDICATOR_COLOUR = MAIN_COLOUR_2;
+const ERROR_COLOUR = Colors.red;
+const DELETE_COLOUR = Colors.red;
+
+const PRIMARY_BUTTON_COLOUR = MAIN_COLOUR_2;
+const SECONDARY_BUTTON_COLOUR = Colors.blueGrey;
+
+const PRIMARY_WHITE = Colors.white;
+const SECONDARY_WHITE = Colors.white70;
+
+const PRIMARY_BLACK = Colors.black;
+const SECONDARY_BLACK = Colors.black87;
+
 List<Widget> emptyLibrary = <Widget>[
   Container(
     padding: EdgeInsets.fromLTRB(10,10,10,0),
@@ -111,9 +130,14 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: LibraryPage(),
+      home: MainPage(),
     );
   }
+}
+
+class MainPage extends StatefulWidget {
+  @override
+  _MainPageState createState() => _MainPageState();
 }
 
 class LibraryPage extends StatefulWidget {
@@ -156,6 +180,67 @@ Route animatePage(page) {
       );
     },
   );
+}
+
+class _MainPageState extends State<MainPage> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+    return (
+        SafeArea(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [MAIN_COLOUR_1, MAIN_COLOUR_2]
+              ),
+            ),
+            child: DefaultTabController(
+              length: 3,
+              child:  Scaffold(
+                backgroundColor: TRANSPARENT,
+                bottomNavigationBar: Container(
+                  color: MAIN_COLOUR_2,
+                  child: TabBar(
+                    labelColor: PRIMARY_WHITE,
+                    unselectedLabelColor: SECONDARY_WHITE,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicatorColor: SECONDARY_BUTTON_COLOUR,
+                    tabs: [
+                      Tab(
+                        icon: Icon(Icons.local_library_rounded),
+                      ),
+                      Tab(
+                        icon: Icon(Icons.search),
+                      ),
+                      Tab(
+                        icon: Icon(Icons.explore),
+                      ),
+                    ],
+                  ),
+                ),
+                body: TabBarView(
+                  children: [
+                    LibraryPage(),
+                    SearchPage(),
+                    Container(child: Icon(Icons.directions_bike)),
+                  ],
+                ),
+              ),
+            )
+          ),
+        )
+    );
+  }
 }
 
 class _LibraryPageState extends State<LibraryPage> {
@@ -252,7 +337,7 @@ class _LibraryPageState extends State<LibraryPage> {
                               Container(
                                 decoration: BoxDecoration(
                                     border: Border.all(
-                                      color: Colors.black,
+                                      color: PRIMARY_BLACK,
                                       width: 5,
                                     )
                                 ),
@@ -325,7 +410,7 @@ class _LibraryPageState extends State<LibraryPage> {
                             },
                             icon: Icon(
                               Icons.favorite,
-                              color: Colors.red,
+                              color: LIKE_COLOUR,
                             )
                         ),
                       )
@@ -347,175 +432,163 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
     return SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xffFF99DF), Color(0xff00C8F0)])
-          ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(
-              child: NotificationListener<OverscrollIndicatorNotification>(
-                onNotification: (overscroll) {
-                  overscroll.disallowGlow();
-                  return;
-                },
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: <Widget>[
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Expanded(
-                            child: Container(
-                              height: 60,
-                              margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
-                              child: TextField(
-                                textInputAction: TextInputAction.search,
-                                onSubmitted: (value) async {
-                                  searchString = value;
-                                  await Navigator.of(context).push(animatePage(SearchPage()));
-                                  library();
-                                },
-                                decoration: InputDecoration(
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(Radius.circular(100)),
-                                    borderSide:  BorderSide(color: Colors.blueGrey, width: 5),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(Radius.circular(100)),
-                                    borderSide:  BorderSide(color: Colors.blueGrey, width: 5),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(Radius.circular(100)),
-                                    borderSide:  BorderSide(color: Colors.blueGrey, width: 5),
-                                  ),
-                                  contentPadding: EdgeInsets.all(20),
-                                  hintText: 'Search ...',
-                                  hasFloatingPlaceholder: false,
+        child: Scaffold(
+          backgroundColor: TRANSPARENT,
+          body: Center(
+            child: NotificationListener<OverscrollIndicatorNotification>(
+              onNotification: (overscroll) {
+                overscroll.disallowGlow();
+                return;
+              },
+              child: SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Expanded(
+                          child: Container(
+                            height: 60,
+                            margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
+                            child: TextField(
+                              textInputAction: TextInputAction.search,
+                              onSubmitted: (value) async {
+                                searchString = value;
+                                await Navigator.of(context).push(animatePage(SearchPage()));
+                                library();
+                              },
+                              decoration: InputDecoration(
+                                fillColor: PRIMARY_WHITE,
+                                filled: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(100)),
+                                  borderSide:  BorderSide(color: SECONDARY_BUTTON_COLOUR, width: 5),
                                 ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(100)),
+                                  borderSide:  BorderSide(color: SECONDARY_BUTTON_COLOUR, width: 5),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(100)),
+                                  borderSide:  BorderSide(color: SECONDARY_BUTTON_COLOUR, width: 5),
+                                ),
+                                contentPadding: EdgeInsets.all(20),
+                                hintText: 'Search ...',
+                                hasFloatingPlaceholder: false,
                               ),
                             ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.fromLTRB(10,10,10,0),
-                            height: 70,
-                            child: Card(
-                              elevation: 5,
-                              child: Container(
-                                margin: EdgeInsets.fromLTRB(0,7,0,7),
-                                padding: EdgeInsets.fromLTRB(10,0,10,0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    IconButton(
-                                      padding: EdgeInsets.all(0),
-                                      onPressed: (){
-                                        reversedList = !reversedList;
-                                        setState(() {});
-                                      },
-                                      icon: !reversedList ? Stack(
-                                            children: <Widget>[
-                                              Positioned(
-                                                  top: 0,
-                                                  left: 5,
-                                                  right: 5,
-                                                  child: Icon(
-                                                    Icons.keyboard_arrow_up,
-                                                    color: Color(0xff00c8f0),
-                                                  )
-                                              ),
-                                              Positioned(
-                                                  bottom: 0,
-                                                  left: 5,
-                                                  right: 5,
-                                                  child: Icon(
-                                                    Icons.keyboard_arrow_down,
-                                                    color: Colors.blueGrey,
-                                                  )
-                                              )
-                                            ],
-                                          ) : Stack(
-                                        children: <Widget>[
-                                          Positioned(
-                                              top: 0,
-                                              left: 5,
-                                              right: 5,
-                                              child: Icon(
-                                                Icons.keyboard_arrow_up,
-                                                color: Colors.blueGrey,
-                                              )
-                                          ),
-                                          Positioned(
-                                              bottom: 0,
-                                              left: 5,
-                                              right: 5,
-                                              child: Icon(
-                                                Icons.keyboard_arrow_down,
-                                                color: Color(0xff00c8f0),
-                                              )
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        showRead = !showRead;
-                                        setState(() {});
-                                        listController.animateTo(0.0, duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
-                                      },
-                                      icon: showRead ? Icon(Icons.album, color: Color(0xff00c8f0),) : Icon(Icons.adjust, color: Colors.blueGrey),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      loading ? Center(
-                        child: CircularProgressIndicator(color: Color(0xffff99df),),
-                      ) : error ? Center(
-                          child: Icon(
-                            Icons.error_outline,
-                            color: Colors.pink,
-                            size: 50.0,
-                            semanticLabel: 'Error loading search results',
-                          )
-                      ) : Container(
-                        height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 80,
-                        child: SmartRefresher(
-                          controller: refreshController,
-                          enablePullDown: true,
-                          header: MaterialClassicHeader(),
-                          onRefresh: () async {
-                            await library();
-                            refreshController.refreshCompleted();
-                          },
-                          child: ListView (
-                            controller: listController,
-                            children: buildLibraryItems(),
                           ),
                         ),
+                        Container(
+                          padding: EdgeInsets.fromLTRB(10,10,10,0),
+                          height: 70,
+                          child: Card(
+                            elevation: 5,
+                            child: Container(
+                              margin: EdgeInsets.fromLTRB(0,7,0,7),
+                              padding: EdgeInsets.fromLTRB(10,0,10,0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  IconButton(
+                                    padding: EdgeInsets.all(0),
+                                    onPressed: (){
+                                      reversedList = !reversedList;
+                                      setState(() {});
+                                    },
+                                    icon: !reversedList ? Stack(
+                                      children: <Widget>[
+                                        Positioned(
+                                            top: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_up,
+                                              color: PRIMARY_BUTTON_COLOUR,
+                                            )
+                                        ),
+                                        Positioned(
+                                            bottom: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_down,
+                                              color: SECONDARY_BUTTON_COLOUR,
+                                            )
+                                        )
+                                      ],
+                                    ) : Stack(
+                                      children: <Widget>[
+                                        Positioned(
+                                            top: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_up,
+                                              color: SECONDARY_BUTTON_COLOUR,
+                                            )
+                                        ),
+                                        Positioned(
+                                            bottom: 0,
+                                            left: 5,
+                                            right: 5,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_down,
+                                              color: PRIMARY_BUTTON_COLOUR,
+                                            )
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      showRead = !showRead;
+                                      setState(() {});
+                                      listController.animateTo(0.0, duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
+                                    },
+                                    icon: showRead ? Icon(Icons.album, color: PRIMARY_BUTTON_COLOUR,) : Icon(Icons.adjust, color: SECONDARY_BUTTON_COLOUR),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    loading ? Center(
+                      child: CircularProgressIndicator(color: PROGRESS_INDICATOR_COLOUR),
+                    ) : error ? Center(
+                        child: Icon(
+                          Icons.error_outline,
+                          color: ERROR_COLOUR,
+                          size: 50.0,
+                          semanticLabel: 'Error loading search results',
+                        )
+                    ) : Container(
+                      height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 150,
+                      child: SmartRefresher(
+                        controller: refreshController,
+                        enablePullDown: true,
+                        header: MaterialClassicHeader(),
+                        onRefresh: () async {
+                          await library();
+                          refreshController.refreshCompleted();
+                        },
+                        child: ListView (
+                          controller: listController,
+                          children: buildLibraryItems(),
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        )
+        ),
     );
   }
 }
@@ -626,7 +699,7 @@ class _SearchPageState extends State<SearchPage> {
                           Container(
                               decoration: BoxDecoration(
                                   border: Border.all(
-                                    color: Colors.black,
+                                    color: PRIMARY_BLACK,
                                     width: 5,
                                   )
                               ),
@@ -641,13 +714,13 @@ class _SearchPageState extends State<SearchPage> {
                                     width: 50,
                                     padding: EdgeInsets.fromLTRB(1, 1, 4, 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.black,
+                                      color: PRIMARY_BLACK,
                                     ),
                                     child: Text(
                                       latestIssue,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: PRIMARY_WHITE,
                                       ),
                                     ),
                                   ),
@@ -724,10 +797,10 @@ class _SearchPageState extends State<SearchPage> {
                         },
                         icon: searchItemsSaved[comicName] ? Icon(
                           Icons.favorite,
-                          color: Colors.red,
+                          color: LIKE_COLOUR,
                         ) : Icon(
                           Icons.favorite_border,
-                          color: Colors.red,
+                          color: LIKE_COLOUR,
                         )
                     ),
                   )
@@ -779,45 +852,37 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xffFF99DF), Color(0xff00C8F0)])
-          ),
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onHorizontalDragUpdate: (details) {
-                  if (details.delta.dx > 8) {
-                    Navigator.of(context).pop(this);
-                  }
-                },
-                child: Container(
-                  height: double.maxFinite,
-                  child: loading ? Center(
-                    child: CircularProgressIndicator(color: Color(0xffff99df),),
-                  ) : error ? Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        color: Colors.pink,
-                        size: 50.0,
-                        semanticLabel: 'Error loading search results',
-                      )
-                  ) : SingleChildScrollView(
-                    child: Column (
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: buildSearchResultsList(),
-                    ),
-                  ),
-                ),
+      child: Scaffold(
+      backgroundColor: TRANSPARENT,
+      body: Center(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragUpdate: (details) {
+            if (details.delta.dx > 8) {
+              Navigator.of(context).pop(this);
+            }
+          },
+          child: Container(
+            height: double.maxFinite,
+            child: loading ? Center(
+              child: CircularProgressIndicator(color: Color(0xffff99df),),
+            ) : error ? Center(
+                child: Icon(
+                  Icons.error_outline,
+                  color: ERROR_COLOUR,
+                  size: 50.0,
+                  semanticLabel: 'Error loading search results',
+                )
+            ) : SingleChildScrollView(
+              child: Column (
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: buildSearchResultsList(),
               ),
             ),
           ),
-        )
+        ),
+      ),
+    ),
     );
   }
 }
@@ -914,7 +979,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
       issues = issues.reversed.toList();
       issuesRead = List<bool>.filled(issues.length, false);
       issuesDownloading = List<bool>.filled(issues.length, false);
-      issuesDownloadIcon = List<Icon>.filled(issues.length, Icon(Icons.download, color: Colors.blueGrey,));
+      issuesDownloadIcon = List<Icon>.filled(issues.length, Icon(Icons.download, color: SECONDARY_BUTTON_COLOUR));
       issuesDownloaded = List<bool>.filled(issues.length, false);
 
       String savedComics;
@@ -1112,14 +1177,14 @@ class _SingleComicPageState extends State<SingleComicPage> {
                               child: SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(color: Color(0xff00c8f0),),
+                                child: CircularProgressIndicator(color: PROGRESS_INDICATOR_COLOUR,),
                               )
                             ) :
                             issuesDownloaded[issueHrefs.indexOf(issueHref)] ? IconButton(
                                 onPressed: () {
                                   //delete(issueHref);
                                 },
-                                icon: Icon(Icons.delete_forever, color: Color(0xffFF99DF),)
+                                icon: Icon(Icons.delete_forever, color: DELETE_COLOUR,)
                             ) : IconButton(
                                 onPressed: () {
                                   //issuesDownloading[issueHrefs.indexOf(issueHref)] = true;
@@ -1162,11 +1227,11 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                 icon: issuesRead[issueHrefs.indexOf(issueHref)]
                                     ? Icon(
                                   Icons.album,
-                                  color: Color(0xff00c8f0),
+                                  color: PRIMARY_BUTTON_COLOUR,
                                 )
                                     : Icon(
                                   Icons.adjust,
-                                  color: Colors.blueGrey,
+                                  color: SECONDARY_BUTTON_COLOUR,
                                 )
                             )
                           ],
@@ -1188,13 +1253,14 @@ class _SingleComicPageState extends State<SingleComicPage> {
     return SafeArea(
         child: Container(
           decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xffFF99DF), Color(0xff00C8F0)])
+            gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [MAIN_COLOUR_1, MAIN_COLOUR_2]
+            ),
           ),
           child: Scaffold(
-            backgroundColor: Colors.transparent,
+            backgroundColor: TRANSPARENT,
             body: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onHorizontalDragUpdate: (details) {
@@ -1205,11 +1271,11 @@ class _SingleComicPageState extends State<SingleComicPage> {
               child: Container(
                 height: double.maxFinite,
                 child:loading ? Center(
-                  child: CircularProgressIndicator(color: Color(0xffff99df),),
+                  child: CircularProgressIndicator(color: PROGRESS_INDICATOR_COLOUR),
                 ) : error ? Center(
                     child: Icon(
                       Icons.error_outline,
-                      color: Colors.pink,
+                      color: ERROR_COLOUR,
                       size: 50.0,
                       semanticLabel: 'Error loading search results',
                     )
@@ -1221,159 +1287,159 @@ class _SingleComicPageState extends State<SingleComicPage> {
                       padding: EdgeInsets.fromLTRB(10,10,10,5),
                       width: double.maxFinite,
                       child: Card(
-                        elevation: 5,
-                        child: InkWell(
-                          onTap: () async {
-                            singleIssue = issueHrefs.indexOf(resumeHref);
-                            await Navigator.of(context).push(animatePage(Reader()));
-                            setState(() {});
-                          },
-                          splashFactory: InkRipple.splashFactory,
-                          child: Stack(
-                            children: <Widget>[
-                              Column(
-                                children: <Widget>[
-                                  Container(
-                                    height: 170,
-                                    margin: EdgeInsets.fromLTRB(10,10,10,10),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: <Widget>[
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: Colors.black,
-                                                width: 5,
-                                              )
+                          elevation: 5,
+                          child: InkWell(
+                            onTap: () async {
+                              singleIssue = issueHrefs.indexOf(resumeHref);
+                              await Navigator.of(context).push(animatePage(Reader()));
+                              setState(() {});
+                            },
+                            splashFactory: InkRipple.splashFactory,
+                            child: Stack(
+                              children: <Widget>[
+                                Column(
+                                  children: <Widget>[
+                                    Container(
+                                      height: 170,
+                                      margin: EdgeInsets.fromLTRB(10,10,10,10),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.max,
+                                        children: <Widget>[
+                                          Container(
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: PRIMARY_BLACK,
+                                                  width: 5,
+                                                )
+                                            ),
+                                            height: double.maxFinite,
+                                            child: FadeInImage.assetNetwork(
+                                                placeholder: 'assets/loading.png',
+                                                image: imageUrl
+                                            ),
                                           ),
-                                          height: double.maxFinite,
-                                          child: FadeInImage.assetNetwork(
-                                              placeholder: 'assets/loading.png',
-                                              image: imageUrl
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: Column(
-                                            children: <Widget>[
-                                              Expanded(
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  margin: EdgeInsets.fromLTRB(20,20,20,20),
-                                                  child: Text(
-                                                    singleComicName,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 22,
+                                          Expanded(
+                                            child: Column(
+                                              children: <Widget>[
+                                                Expanded(
+                                                  child: Container(
+                                                    alignment: Alignment.center,
+                                                    margin: EdgeInsets.fromLTRB(20,20,20,20),
+                                                    child: Text(
+                                                      singleComicName,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 22,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
-                                              ),
-                                              Expanded(
-                                                child: Container(
-                                                  alignment: Alignment.topLeft,
-                                                  margin: EdgeInsets.fromLTRB(20,0,20,0),
-                                                  child: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.start,
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: <Widget>[
-                                                      Text(
-                                                        publisher,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
+                                                Expanded(
+                                                  child: Container(
+                                                    alignment: Alignment.topLeft,
+                                                    margin: EdgeInsets.fromLTRB(20,0,20,0),
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.start,
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: <Widget>[
+                                                        Text(
+                                                          publisher,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          textAlign: TextAlign.left,
+                                                          style: TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 15,
+                                                          ),
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        writer,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
+                                                        Text(
+                                                          writer,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          textAlign: TextAlign.left,
+                                                          style: TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 15,
+                                                          ),
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        artist,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
+                                                        Text(
+                                                          artist,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          textAlign: TextAlign.left,
+                                                          style: TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 15,
+                                                          ),
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        pubDate,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        textAlign: TextAlign.left,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
+                                                        Text(
+                                                          pubDate,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          textAlign: TextAlign.left,
+                                                          style: TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 15,
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ],
+                                                      ],
+                                                    ),
                                                   ),
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                        )
-                                      ],
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  Container(
-                                    height: 50,
-                                    margin: EdgeInsets.fromLTRB(10,0,10,10),
-                                    child: Text(
-                                      summary,
-                                    ),
-                                  )
-                                ],
-                              ),
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: IconButton(
-                                    onPressed: () async {
-                                      List<dynamic> comicData = [
-                                        imageUrl,
+                                    Container(
+                                      height: 50,
+                                      margin: EdgeInsets.fromLTRB(10,0,10,10),
+                                      child: Text(
                                         summary,
-                                        singleComicHref,
-                                      ];
-
-                                      final prefs = await SharedPreferences.getInstance();
-                                      String savedComics = prefs.getString("saved");
-                                      Map<String, dynamic> savedComicsData;
-                                      try{
-                                        savedComicsData = json.decode(savedComics);
-                                      } catch (e) {print(e);}
-
-                                      if (savedComicsData == null){
-                                        savedComicsData = <String, List<dynamic>>{};
-                                      }
-                                      if (singleComicSaved){
-                                        savedComicsData.remove(singleComicName);
-                                      } else {
-                                        savedComicsData[singleComicName] = comicData;
-                                      }
-                                      prefs.setString('saved', json.encode(savedComicsData));
-                                      singleComicSaved = !singleComicSaved;
-                                      setState(() {});
-                                    },
-                                    icon: singleComicSaved ? Icon(
-                                      Icons.favorite,
-                                      color: Colors.red,
-                                    ) : Icon(
-                                      Icons.favorite_border,
-                                      color: Colors.red,
+                                      ),
                                     )
+                                  ],
                                 ),
-                              )
-                            ],
-                          ),
-                        )
+                                Align(
+                                  alignment: Alignment.topRight,
+                                  child: IconButton(
+                                      onPressed: () async {
+                                        List<dynamic> comicData = [
+                                          imageUrl,
+                                          summary,
+                                          singleComicHref,
+                                        ];
+
+                                        final prefs = await SharedPreferences.getInstance();
+                                        String savedComics = prefs.getString("saved");
+                                        Map<String, dynamic> savedComicsData;
+                                        try{
+                                          savedComicsData = json.decode(savedComics);
+                                        } catch (e) {print(e);}
+
+                                        if (savedComicsData == null){
+                                          savedComicsData = <String, List<dynamic>>{};
+                                        }
+                                        if (singleComicSaved){
+                                          savedComicsData.remove(singleComicName);
+                                        } else {
+                                          savedComicsData[singleComicName] = comicData;
+                                        }
+                                        prefs.setString('saved', json.encode(savedComicsData));
+                                        singleComicSaved = !singleComicSaved;
+                                        setState(() {});
+                                      },
+                                      icon: singleComicSaved ? Icon(
+                                        Icons.favorite,
+                                        color: LIKE_COLOUR,
+                                      ) : Icon(
+                                        Icons.favorite_border,
+                                        color: LIKE_COLOUR,
+                                      )
+                                  ),
+                                )
+                              ],
+                            ),
+                          )
                       ),
                     ),
                     Container(
@@ -1396,7 +1462,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                 },
                                 child: Text("Download All"),
                                 style: ElevatedButton.styleFrom(
-                                    primary: Color(0xff00c8f0),
+                                  primary: PRIMARY_BUTTON_COLOUR,
                                 ),
                               ),
                               Row(
@@ -1417,7 +1483,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                             right: 5,
                                             child: Icon(
                                               Icons.keyboard_arrow_up,
-                                              color: Color(0xff00c8f0),
+                                              color: PRIMARY_BUTTON_COLOUR,
                                             )
                                         ),
                                         Positioned(
@@ -1426,7 +1492,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                             right: 5,
                                             child: Icon(
                                               Icons.keyboard_arrow_down,
-                                              color: Colors.blueGrey,
+                                              color: SECONDARY_BUTTON_COLOUR,
                                             )
                                         )
                                       ],
@@ -1438,7 +1504,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                             right: 5,
                                             child: Icon(
                                               Icons.keyboard_arrow_up,
-                                              color: Colors.blueGrey,
+                                              color: SECONDARY_BUTTON_COLOUR,
                                             )
                                         ),
                                         Positioned(
@@ -1447,7 +1513,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                             right: 5,
                                             child: Icon(
                                               Icons.keyboard_arrow_down,
-                                              color: Color(0xff00c8f0),
+                                              color: PRIMARY_BUTTON_COLOUR,
                                             )
                                         )
                                       ],
@@ -1459,7 +1525,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                       setState(() {});
                                       listController.animateTo(0.0, duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
                                     },
-                                    icon: showDownloaded ? Icon(Icons.download, color: Color(0xff00c8f0),) : Icon(Icons.download, color: Colors.blueGrey),
+                                    icon: showDownloaded ? Icon(Icons.download, color: PRIMARY_BUTTON_COLOUR) : Icon(Icons.download, color: SECONDARY_BUTTON_COLOUR),
                                   ),
                                   IconButton(
                                     onPressed: () {
@@ -1467,7 +1533,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
                                       setState(() {});
                                       listController.animateTo(0.0, duration: Duration(milliseconds: 800), curve: Curves.easeOutCubic);
                                     },
-                                    icon: showRead ? Icon(Icons.album, color: Color(0xff00c8f0),) : Icon(Icons.adjust, color: Colors.blueGrey),
+                                    icon: showRead ? Icon(Icons.album, color: PRIMARY_BUTTON_COLOUR) : Icon(Icons.adjust, color: SECONDARY_BUTTON_COLOUR),
                                   ),
                                 ],
                               ),
@@ -1477,19 +1543,19 @@ class _SingleComicPageState extends State<SingleComicPage> {
                       ),
                     ),
                     Expanded(
-                      child: SmartRefresher(
-                        enablePullDown: true,
-                        header: MaterialClassicHeader(),
-                        controller: refreshController,
-                        onRefresh: () async {
-                          setState(() {});
-                          refreshController.refreshCompleted();
-                        },
-                        child: ListView(
-                          controller: listController,
-                          children: buildIssuesList(),
+                        child: SmartRefresher(
+                            enablePullDown: true,
+                            header: MaterialClassicHeader(),
+                            controller: refreshController,
+                            onRefresh: () async {
+                              setState(() {});
+                              refreshController.refreshCompleted();
+                            },
+                            child: ListView(
+                              controller: listController,
+                              children: buildIssuesList(),
+                            )
                         )
-                      )
                     )
                   ],
                 ),
@@ -1568,7 +1634,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                       (pageSplit.indexOf(page)).toString() + "/" + (pageSplit.length - 1).toString(),
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.white,
+                        color: PRIMARY_WHITE,
                         decoration: TextDecoration.none,
                       ),
                     ),
@@ -1612,11 +1678,11 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return loading ? Center(
-      child: CircularProgressIndicator(color: Color(0xffff99df),),
+      child: CircularProgressIndicator(color: PROGRESS_INDICATOR_COLOUR),
     ) : error ? Center(
         child: Icon(
           Icons.error_outline,
-          color: Colors.pink,
+          color: ERROR_COLOUR,
           size: 50.0,
           semanticLabel: 'Error loading search results',
         )
@@ -1662,11 +1728,11 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Colors.white,
+                        color: PRIMARY_WHITE,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
                       child: Icon(Icons.arrow_downward, color:Colors.white),
@@ -1677,11 +1743,11 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Color(0xffff99df),
+                        color: MAIN_COLOUR_1,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
                       child: AnimatedBuilder(
@@ -1689,7 +1755,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                         builder: (_, child) {
                           return Transform.rotate(
                             angle: _controller.value * 2 * math.pi,
-                            child: Icon(Icons.refresh, color:Colors.white),
+                            child: Icon(Icons.refresh, color: PRIMARY_WHITE),
                           );
                         },
                       ),
@@ -1699,10 +1765,10 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
               else if(mode == RefreshStatus.failed){
                 body = Card(
                     shape: CircleBorder(),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
-                      child: Icon(Icons.error_outline, color:Colors.white),
+                      child: Icon(Icons.error_outline, color: PRIMARY_WHITE),
                     )
                 );
               }
@@ -1710,14 +1776,14 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Color(0xffff99df),
+                        color: MAIN_COLOUR_1,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
-                      child: Icon(Icons.arrow_downward, color:Colors.white),
+                      child: Icon(Icons.arrow_downward, color:PRIMARY_WHITE),
                     )
                 );
               }
@@ -1725,14 +1791,14 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Color(0xffff99df),
+                        color: MAIN_COLOUR_1,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
-                      child: Icon(Icons.done, color:Colors.white),
+                      child: Icon(Icons.done, color:PRIMARY_WHITE),
                     )
                 );
               }
@@ -1750,14 +1816,14 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Color(0xffff99df),
+                        color: MAIN_COLOUR_1,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
-                      child: Icon(Icons.done, color:Colors.white),
+                      child: Icon(Icons.done, color:PRIMARY_WHITE),
                     )
                 );
               }
@@ -1765,11 +1831,11 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Color(0xffff99df),
+                        color: MAIN_COLOUR_1,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
                       child: AnimatedBuilder(
@@ -1777,7 +1843,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                         builder: (_, child) {
                           return Transform.rotate(
                             angle: _controller.value * 2 * math.pi,
-                            child: Icon(Icons.refresh, color:Colors.white),
+                            child: Icon(Icons.refresh, color:PRIMARY_WHITE),
                           );
                         },
                       ),
@@ -1787,10 +1853,10 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
               else if(mode == LoadStatus.failed){
                 body = Card(
                     shape: CircleBorder(),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
-                      child: Icon(Icons.error_outline, color:Colors.white),
+                      child: Icon(Icons.error_outline, color:PRIMARY_WHITE),
                     )
                 );
               }
@@ -1798,14 +1864,14 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Color(0xffff99df),
+                        color: MAIN_COLOUR_1,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
-                      child: Icon(Icons.arrow_upward, color:Colors.white),
+                      child: Icon(Icons.arrow_upward, color:PRIMARY_WHITE),
                     )
                 );
               }
@@ -1813,14 +1879,14 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                 body = Card(
                     shape: CircleBorder(
                       side: new BorderSide(
-                        color: Color(0xffff99df),
+                        color: MAIN_COLOUR_1,
                         width: 3,
                       ),
                     ),
-                    color: Colors.black,
+                    color: PRIMARY_BLACK,
                     child: Container(
                       margin: EdgeInsets.all(10),
-                      child: Icon(Icons.done, color:Colors.white),
+                      child: Icon(Icons.done, color:PRIMARY_WHITE),
                     )
                 );
               }

@@ -1564,13 +1564,6 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
-                    InteractiveViewer(
-                      clipBehavior: Clip.none,
-                      child: FadeInImage.assetNetwork(
-                        image: pageUrl,
-                        placeholder: 'assets/loading.png',
-                      ),
-                    ),
                     Text(
                       (pageSplit.indexOf(page)).toString() + "/" + (pageSplit.length - 1).toString(),
                       style: TextStyle(
@@ -1578,7 +1571,14 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                         color: Colors.white,
                         decoration: TextDecoration.none,
                       ),
-                    )
+                    ),
+                    InteractiveViewer(
+                      clipBehavior: Clip.none,
+                      child: FadeInImage.assetNetwork(
+                        image: pageUrl,
+                        placeholder: 'assets/loading.png',
+                      ),
+                    ),
                   ],
                 ),
               )

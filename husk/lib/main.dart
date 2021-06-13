@@ -18,7 +18,8 @@ SharedPreferences prefs;
 Map<String, List<dynamic>> savedComicsData;
 Map<String, List<String>> searchItems = <String, List<String>>{};
 
-String currentSearchString = "";
+String currentSearchPageSearchString = "";
+String currentLibraryPageSearchString = "";
 
 const TRANSPARENT = Colors.transparent;
 
@@ -264,7 +265,6 @@ class _MainPageState extends State<MainPage>{
 class _LibraryPageState extends State<LibraryPage> {
   ScrollController listController = ScrollController();
   List<Widget> libraryItems = emptyLibrary;
-  String searchString = "";
 
   bool loading = true;
   bool error = false;
@@ -299,6 +299,10 @@ class _LibraryPageState extends State<LibraryPage> {
     });
     return;
   }
+  
+  updateCurrentSearchString(searchString) async {
+    currentLibraryPageSearchString = searchString;
+  }
 
   List<Widget> buildLibraryItems() {
     String savedComics;
@@ -323,7 +327,8 @@ class _LibraryPageState extends State<LibraryPage> {
             }
           });
         }
-        bool include = (searchString == "" || comicName.toLowerCase().contains(searchString.toLowerCase().trim()));
+        print(currentLibraryPageSearchString);
+        bool include = (currentLibraryPageSearchString == "" || comicName.toLowerCase().contains(currentLibraryPageSearchString.toLowerCase().trim()));
         if ((unread | showRead) && include) {
           libraryItems.add(
             Container(
@@ -470,17 +475,13 @@ class _LibraryPageState extends State<LibraryPage> {
                           child: Container(
                             height: 60,
                             margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
-                            child: TextField(
+                            child: TextFormField(
                               textInputAction: TextInputAction.search,
                               onChanged: (value) {
-                                searchString = value;
+                                updateCurrentSearchString(value);
                                 setState(() {});
                               },
-                              onSubmitted: (value) async {
-                                //searchString = value;
-                                //await Navigator.of(context).push(animatePage(SearchPage()));
-                                //library();
-                              },
+                              initialValue: currentLibraryPageSearchString,
                               decoration: InputDecoration(
                                 fillColor: PRIMARY_WHITE,
                                 filled: true,
@@ -629,7 +630,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void search(searchString) async {
-    currentSearchString = searchString;
+    currentSearchPageSearchString = searchString;
     searchItems = <String, List<String>>{};
     setState(() {
       loading = true;
@@ -894,7 +895,7 @@ class _SearchPageState extends State<SearchPage> {
                           onFieldSubmitted: (value) async {
                             search(value);
                           },
-                          initialValue: currentSearchString,
+                          initialValue: currentSearchPageSearchString,
                           decoration: InputDecoration(
                             fillColor: PRIMARY_WHITE,
                             filled: true,

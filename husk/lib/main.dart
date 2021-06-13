@@ -1572,7 +1572,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
                       ),
                     ),
                     Text(
-                      (pageSplit.indexOf(page)).toString(),
+                      (pageSplit.indexOf(page)).toString() + "/" + (pageSplit.length - 1).toString(),
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.white,

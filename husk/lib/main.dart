@@ -40,6 +40,62 @@ const SECONDARY_WHITE = Colors.white70;
 const PRIMARY_BLACK = Colors.black;
 const SECONDARY_BLACK = Colors.black87;
 
+List<Widget> noSearchResults = <Widget>[
+  Container(
+    padding: EdgeInsets.fromLTRB(10,10,10,0),
+    height: 150,
+    width: double.maxFinite,
+    child: Card(
+      elevation: 5,
+      child: InkWell(
+        splashFactory: InkRipple.splashFactory,
+        child: Container(
+          margin: EdgeInsets.fromLTRB(10,10,10,10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.centerLeft,
+                        margin: EdgeInsets.fromLTRB(20,0,0,0),
+                        child: Text(
+                          "No search results!",
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.topLeft,
+                        margin: EdgeInsets.fromLTRB(20,0,0,0),
+                        child: Text(
+                          "Try something else ...",
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    ),
+  ),
+];
+
 List<Widget> emptyLibrary = <Widget>[
   Container(
     padding: EdgeInsets.fromLTRB(10,10,10,0),
@@ -63,7 +119,7 @@ List<Widget> emptyLibrary = <Widget>[
                         alignment: Alignment.centerLeft,
                         margin: EdgeInsets.fromLTRB(20,0,0,0),
                         child: Text(
-                          "Search and favourite your comics!",
+                          "Search and save your comics!",
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -264,6 +320,7 @@ class _MainPageState extends State<MainPage>{
 
 class _LibraryPageState extends State<LibraryPage> {
   ScrollController listController = ScrollController();
+  TextEditingController libraryInputController = TextEditingController(text: currentLibraryPageSearchString);
   List<Widget> libraryItems = emptyLibrary;
 
   bool loading = true;
@@ -449,6 +506,9 @@ class _LibraryPageState extends State<LibraryPage> {
     if (!reversedList){
       libraryItems = libraryItems.reversed.toList();
     }
+    if (libraryItems.length == 0) {
+      return noSearchResults;
+    }
     return libraryItems;
   }
 
@@ -476,12 +536,12 @@ class _LibraryPageState extends State<LibraryPage> {
                             height: 60,
                             margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
                             child: TextFormField(
+                              controller: libraryInputController,
                               textInputAction: TextInputAction.search,
                               onChanged: (value) {
                                 updateCurrentSearchString(value);
                                 setState(() {});
                               },
-                              initialValue: currentLibraryPageSearchString,
                               decoration: InputDecoration(
                                 fillColor: PRIMARY_WHITE,
                                 filled: true,
@@ -499,7 +559,14 @@ class _LibraryPageState extends State<LibraryPage> {
                                 ),
                                 contentPadding: EdgeInsets.all(20),
                                 hintText: 'Search ...',
-                                hasFloatingPlaceholder: false,
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    libraryInputController.clear();
+                                    updateCurrentSearchString("");
+                                    setState(() {});
+                                  },
+                                  icon: libraryInputController.text.length > 0 ? Icon(Icons.clear, color: PRIMARY_BUTTON_COLOUR) : Icon(Icons.clear, color: SECONDARY_BUTTON_COLOUR),
+                                ),
                               ),
                             ),
                           ),
@@ -617,6 +684,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
 class _SearchPageState extends State<SearchPage> {
   ScrollController listController = ScrollController();
+  TextEditingController libraryInputController = TextEditingController(text: currentSearchPageSearchString);
   Map<String, bool> searchItemsSaved = <String, bool>{};
   List<Widget> searchResults = emptyContainer;
 
@@ -891,11 +959,11 @@ class _SearchPageState extends State<SearchPage> {
                         height: 60,
                         margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
                         child: TextFormField(
+                          controller: libraryInputController,
                           textInputAction: TextInputAction.search,
                           onFieldSubmitted: (value) async {
                             search(value);
                           },
-                          initialValue: currentSearchPageSearchString,
                           decoration: InputDecoration(
                             fillColor: PRIMARY_WHITE,
                             filled: true,
@@ -911,9 +979,14 @@ class _SearchPageState extends State<SearchPage> {
                               borderRadius: BorderRadius.all(Radius.circular(100)),
                               borderSide:  BorderSide(color: SECONDARY_BUTTON_COLOUR, width: 5),
                             ),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                libraryInputController.clear();
+                              },
+                              icon: libraryInputController.text.length > 0 ? Icon(Icons.clear, color: PRIMARY_BUTTON_COLOUR) : Icon(Icons.clear, color: SECONDARY_BUTTON_COLOUR),
+                            ),
                             contentPadding: EdgeInsets.all(20),
                             hintText: 'Search ...',
-                            hasFloatingPlaceholder: false,
                           ),
                         ),
                       ),

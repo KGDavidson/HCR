@@ -9,18 +9,17 @@ import 'global_static.dart';
 import 'global_widgets.dart';
 import 'animate_page.dart';
 import 'single_comic_page.dart';
-import 'library_page.dart';
 
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 
-class TopToday extends StatefulWidget {
+class TopWeek extends StatefulWidget {
   @override
-  _TopTodayState createState() => _TopTodayState();
+  _TopWeekState createState() => _TopWeekState();
 }
 
-class _TopTodayState extends State<TopToday> {
+class _TopWeekState extends State<TopWeek> {
   ScrollController listController = ScrollController();
   TextEditingController libraryInputController = TextEditingController(text: currentSearchPageSearchString);
   Map<String, bool> searchItemsSaved = <String, bool>{};
@@ -48,7 +47,7 @@ class _TopTodayState extends State<TopToday> {
 
     final response = await http.post(uri, headers: HEADERS);
     if (response.statusCode == 200) {
-      List<dom.Element> comics = html.parse(response.body).getElementById("tab-top-day").children;
+      List<dom.Element> comics = html.parse(response.body).getElementById("tab-top-week").children;
 
       for (int i = 0; i < comics.length; i++){
         dom.Element comic = comics[i];
@@ -96,88 +95,88 @@ class _TopTodayState extends State<TopToday> {
           height: 150,
           width: double.maxFinite,
           child: Card(
-              elevation: 5,
-              child: InkWell(
-                splashFactory: InkRipple.splashFactory,
-                onTap: () {
-                  singleComicHref = comicHref;
-                  Navigator.of(context).push(
-                      animatePage(SingleComicPage()));
-                },
-                child: Container(
-                  margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.max,
-                    children: <Widget>[
-                      Container(
-                          decoration: BoxDecoration(
-                              border: Border.all(
-                                color: PRIMARY_BLACK,
-                                width: 5,
-                              )
-                          ),
-                          height: double.maxFinite,
-                          child: Stack(
-                            children: <Widget>[
-                              FadeInImage.assetNetwork(
-                                  placeholder: 'assets/loading.png',
-                                  image: imageUrl
-                              ),
-                              Container(
-                                width: 50,
-                                padding: EdgeInsets.fromLTRB(1, 1, 4, 4),
-                                decoration: BoxDecoration(
-                                  color: PRIMARY_BLACK,
-                                ),
-                                child: Text(
-                                  latestIssue,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: PRIMARY_WHITE,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                      ),
-                      Expanded(
-                        child: Column(
+            elevation: 5,
+            child: InkWell(
+              splashFactory: InkRipple.splashFactory,
+              onTap: () {
+                singleComicHref = comicHref;
+                Navigator.of(context).push(
+                    animatePage(SingleComicPage()));
+              },
+              child: Container(
+                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                              color: PRIMARY_BLACK,
+                              width: 5,
+                            )
+                        ),
+                        height: double.maxFinite,
+                        child: Stack(
                           children: <Widget>[
-                            Expanded(
-                              child: Container(
-                                alignment: Alignment.centerLeft,
-                                margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
-                                child: Text(
-                                  comicName,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                              ),
+                            FadeInImage.assetNetwork(
+                                placeholder: 'assets/loading.png',
+                                image: imageUrl
                             ),
-                            Expanded(
-                              child: Container(
-                                alignment: Alignment.topLeft,
-                                margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
-                                child: Text(
-                                  "",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                  ),
+                            Container(
+                              width: 50,
+                              padding: EdgeInsets.fromLTRB(1, 1, 4, 4),
+                              decoration: BoxDecoration(
+                                color: PRIMARY_BLACK,
+                              ),
+                              child: Text(
+                                latestIssue,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: PRIMARY_WHITE,
                                 ),
                               ),
                             ),
                           ],
-                        ),
-                      )
-                    ],
-                  ),
+                        )
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: <Widget>[
+                          Expanded(
+                            child: Container(
+                              alignment: Alignment.centerLeft,
+                              margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
+                              child: Text(
+                                comicName,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              alignment: Alignment.topLeft,
+                              margin: EdgeInsets.fromLTRB(20, 0, 0, 0),
+                              child: Text(
+                                "",
+                                textAlign: TextAlign.left,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
                 ),
               ),
+            ),
           ),
         ),
       );

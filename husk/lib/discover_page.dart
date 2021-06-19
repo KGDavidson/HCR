@@ -13,6 +13,9 @@ import 'library_page.dart';
 import 'new_releases.dart';
 import 'most_popular.dart';
 import 'latest_updated.dart';
+import 'top_today.dart';
+import 'top_week.dart';
+import 'top_month.dart';
 
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
@@ -338,9 +341,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
               NewReleases(),
               MostPopular(),
               LatestUpdated(),
-              LibraryPage(),
-              LibraryPage(),
-              LibraryPage(),
+              TopToday(),
+              TopWeek(),
+              TopMonth(),
             ],
           ),
         ),

@@ -18,7 +18,6 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    //debugPaintSizeEnabled = true;
     return MaterialApp(
       title: 'Husk Comic Reader',
       theme: ThemeData(

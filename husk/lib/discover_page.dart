@@ -12,6 +12,7 @@ import 'single_comic_page.dart';
 import 'library_page.dart';
 import 'new_releases.dart';
 import 'most_popular.dart';
+import 'latest_updated.dart';
 
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
@@ -336,7 +337,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
             children: [
               NewReleases(),
               MostPopular(),
-              LibraryPage(),
+              LatestUpdated(),
               LibraryPage(),
               LibraryPage(),
               LibraryPage(),

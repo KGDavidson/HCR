@@ -35,6 +35,7 @@ class _MostPopularState extends State<MostPopular> {
   @override
   void initState() {
     super.initState();
+    mostPopularItems = <String, List<String>>{};
     load();
   }
 
@@ -284,7 +285,7 @@ class _MostPopularState extends State<MostPopular> {
           Icons.error_outline,
           color: ERROR_COLOUR,
           size: 50.0,
-          semanticLabel: 'Error loading search results',
+          semanticLabel: 'Error loading results',
         )
     ) : Container(
       height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 150,

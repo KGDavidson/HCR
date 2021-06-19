@@ -15,12 +15,12 @@ import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 
-class NewReleases extends StatefulWidget {
+class LatestUpdated extends StatefulWidget {
   @override
-  _NewReleasesState createState() => _NewReleasesState();
+  _LatestUpdatedState createState() => _LatestUpdatedState();
 }
 
-class _NewReleasesState extends State<NewReleases> {
+class _LatestUpdatedState extends State<LatestUpdated> {
   ScrollController listController = ScrollController();
   TextEditingController libraryInputController = TextEditingController(text: currentSearchPageSearchString);
   Map<String, bool> searchItemsSaved = <String, bool>{};
@@ -35,7 +35,7 @@ class _NewReleasesState extends State<NewReleases> {
   @override
   void initState() {
     super.initState();
-    newReleasesItems = <String, List<String>>{};
+    latestUpdatedItems = <String, List<String>>{};
     load();
   }
 
@@ -44,7 +44,7 @@ class _NewReleasesState extends State<NewReleases> {
       loading = true;
       error = false;
     });
-    var uri = Uri.parse("https://readcomiconline.li/ComicList/Newest");
+    var uri = Uri.parse("https://readcomiconline.li/ComicList/LatestUpdate");
 
     final response = await http.post(uri, headers: HEADERS);
     if (response.statusCode == 200 && html.parse(response.body).getElementsByClassName("listing").length > 0) {
@@ -69,7 +69,7 @@ class _NewReleasesState extends State<NewReleases> {
           imageUrl = "https://readcomiconline.li" + imgSrc;
         }
 
-        newReleasesItems[comicName] = <String>[
+        latestUpdatedItems[comicName] = <String>[
           imageUrl,
           description,
           comicHref,
@@ -250,13 +250,13 @@ class _NewReleasesState extends State<NewReleases> {
       savedComicsData = <String, List<dynamic>>{};
     }
     Map<String, dynamic> savedComicsDataCopy = Map.from(savedComicsData);
-    Map<String, dynamic> searchItemsCopy = Map.from(newReleasesItems);
+    Map<String, dynamic> searchItemsCopy = Map.from(latestUpdatedItems);
     savedComicsData.removeWhere((key, value) {
-      if (newReleasesItems.containsKey(key)) {
+      if (latestUpdatedItems.containsKey(key)) {
         if (savedComicsData[key].length < 4) {
-          savedComicsData[key].add(newReleasesItems[key][3]);
+          savedComicsData[key].add(latestUpdatedItems[key][3]);
         } else {
-          savedComicsData[key][3] = newReleasesItems[key][3];
+          savedComicsData[key][3] = latestUpdatedItems[key][3];
         }
         return false;
       }

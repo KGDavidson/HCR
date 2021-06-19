@@ -22,7 +22,7 @@ class _SearchPageState extends State<SearchPage> {
   ScrollController listController = ScrollController();
   TextEditingController libraryInputController = TextEditingController(text: currentSearchPageSearchString);
   Map<String, bool> searchItemsSaved = <String, bool>{};
-  List<Widget> searchResults = emptyContainer;
+  List<Widget> searchResults = emptySearch;
 
   bool loading = false;
   bool error = false;
@@ -235,6 +235,9 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   List<Widget> buildSearchResultsList() {
+    if (searchItems.entries.length == 0) {
+      return searchResults;
+    }
     String savedComics;
     try {
       savedComics = prefs.getString("saved");

@@ -34,7 +34,7 @@ class _TopMonthState extends State<TopMonth> {
   @override
   void initState() {
     super.initState();
-    topTodayItems = <String, List<String>>{};
+    topMonthItems = <String, List<String>>{};
     load();
   }
 
@@ -63,7 +63,7 @@ class _TopMonthState extends State<TopMonth> {
           imageUrl = "https://readcomiconline.li" + imgSrc;
         }
 
-        topTodayItems[comicName] = <String>[
+        topMonthItems[comicName] = <String>[
           imageUrl,
           comicHref,
           latestIssue,
@@ -197,7 +197,7 @@ class _TopMonthState extends State<TopMonth> {
     if (savedComicsData == null) {
       savedComicsData = <String, List<dynamic>>{};
     }
-    Map<String, dynamic> searchItemsCopy = Map.from(topTodayItems);
+    Map<String, dynamic> searchItemsCopy = Map.from(topMonthItems);
     buildListPart(searchItemsCopy, false);
     return searchResults;
   }

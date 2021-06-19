@@ -68,7 +68,7 @@ class _NewReleasesState extends State<NewReleases> {
           imageUrl = "https://readcomiconline.li" + imgSrc;
         }
 
-        searchItems[comicName] = <String>[
+        newReleasesItems[comicName] = <String>[
           imageUrl,
           description,
           comicHref,
@@ -249,13 +249,13 @@ class _NewReleasesState extends State<NewReleases> {
       savedComicsData = <String, List<dynamic>>{};
     }
     Map<String, dynamic> savedComicsDataCopy = Map.from(savedComicsData);
-    Map<String, dynamic> searchItemsCopy = Map.from(searchItems);
+    Map<String, dynamic> searchItemsCopy = Map.from(newReleasesItems);
     savedComicsData.removeWhere((key, value) {
-      if (searchItems.containsKey(key)) {
+      if (newReleasesItems.containsKey(key)) {
         if (savedComicsData[key].length < 4) {
-          savedComicsData[key].add(searchItems[key][3]);
+          savedComicsData[key].add(newReleasesItems[key][3]);
         } else {
-          savedComicsData[key][3] = searchItems[key][3];
+          savedComicsData[key][3] = newReleasesItems[key][3];
         }
         return false;
       }

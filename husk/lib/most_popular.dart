@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'global.dart';
@@ -8,48 +9,43 @@ import 'global_static.dart';
 import 'global_widgets.dart';
 import 'animate_page.dart';
 import 'single_comic_page.dart';
-
 import 'library_page.dart';
-import 'new_releases.dart';
-import 'most_popular.dart';
 
 import 'package:html/dom.dart' as dom;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html;
 
-class DiscoverPage extends StatefulWidget {
+class MostPopular extends StatefulWidget {
   @override
-  _DiscoverPageState createState() => _DiscoverPageState();
+  _MostPopularState createState() => _MostPopularState();
 }
 
-class _DiscoverPageState extends State<DiscoverPage> {
+class _MostPopularState extends State<MostPopular> {
   ScrollController listController = ScrollController();
   TextEditingController libraryInputController = TextEditingController(text: currentSearchPageSearchString);
   Map<String, bool> searchItemsSaved = <String, bool>{};
-  List<Widget> searchResults = emptyContainer;
+  List<Widget> searchResults = [];
 
   bool loading = false;
   bool error = false;
   bool showLibraryItems = true;
 
+  RefreshController refreshController = RefreshController(initialRefresh: false);
+
   @override
   void initState() {
     super.initState();
+    load();
   }
 
-  void search(searchString) async {
-    currentSearchPageSearchString = searchString;
-    searchItems = <String, List<String>>{};
+  void load() async{
     setState(() {
       loading = true;
       error = false;
     });
+    var uri = Uri.parse("https://readcomiconline.li/ComicList/MostPopular");
 
-    var uri = Uri.parse("https://readcomiconline.li/Search/Comic");
-    var formData = new Map<String, dynamic>();
-    formData['keyword'] = searchString;
-
-    final response = await http.post(uri, headers: HEADERS, body: formData);
+    final response = await http.post(uri, headers: HEADERS);
     if (response.statusCode == 200 && html.parse(response.body).getElementsByClassName("listing").length > 0) {
       List<dom.Element> comics = html.parse(response.body).getElementsByClassName("listing")[0].getElementsByTagName("tr");
       comics.removeAt(0);
@@ -63,7 +59,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         String comicName = comic.children[0].getElementsByTagName("a")[0].text.trim();
         String comicHref = "https://readcomiconline.li" + comic.children[0].getElementsByTagName("a")[0].attributes["href"];
         String latestIssue = comic.children[1].text.replaceAll("Issue ", "").replaceAll("Completed", "//").trim();
-        String description = title.getElementsByTagName("p")[0].text.replaceAll("...", "").replaceAll("N/a", "...").trim();
+        String description = title.getElementsByTagName("p")[1].text.replaceAll("...", "").replaceAll("N/a", "...").trim();
         String imgSrc = title.getElementsByTagName("img")[0].attributes['src'];
         String imageUrl;
         if (imgSrc.contains("http")){
@@ -72,7 +68,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           imageUrl = "https://readcomiconline.li" + imgSrc;
         }
 
-        searchItems[comicName] = <String>[
+        mostPopularItems[comicName] = <String>[
           imageUrl,
           description,
           comicHref,
@@ -238,7 +234,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
   }
 
-  List<Widget> buildSearchResultsList() {
+  List<Widget> buildResultsList() {
     String savedComics;
     try {
       savedComics = prefs.getString("saved");
@@ -253,13 +249,13 @@ class _DiscoverPageState extends State<DiscoverPage> {
       savedComicsData = <String, List<dynamic>>{};
     }
     Map<String, dynamic> savedComicsDataCopy = Map.from(savedComicsData);
-    Map<String, dynamic> searchItemsCopy = Map.from(searchItems);
+    Map<String, dynamic> searchItemsCopy = Map.from(mostPopularItems);
     savedComicsData.removeWhere((key, value) {
-      if (searchItems.containsKey(key)) {
+      if (mostPopularItems.containsKey(key)) {
         if (savedComicsData[key].length < 4) {
-          savedComicsData[key].add(searchItems[key][3]);
+          savedComicsData[key].add(mostPopularItems[key][3]);
         } else {
-          savedComicsData[key][3] = searchItems[key][3];
+          savedComicsData[key][3] = mostPopularItems[key][3];
         }
         return false;
       }
@@ -281,67 +277,28 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: DefaultTabController(
-        length: 6,
-        child:  Scaffold(
-          backgroundColor: TRANSPARENT,
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(kToolbarHeight),
-            child: Container(
-              color: PRIMARY_WHITE,
-              child: TabBar(
-                isScrollable: true,
-                labelColor: PRIMARY_BLACK,
-                unselectedLabelColor: SECONDARY_BLACK,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorColor: SECONDARY_BLACK,
-                labelStyle: TextStyle(
-                  fontSize: 12.0,
-                ),
-                unselectedLabelStyle: TextStyle(
-                  fontSize: 10.0,
-                ),
-                tabs: [
-                  Tab(
-                    icon: Icon(Icons.new_releases),
-                    text: "New Releases",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.star_border_outlined),
-                    text: "Most Popular",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.update),
-                    text: "Latest Updated",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.today),
-                    text: "Top Today",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.calendar_view_week),
-                    text: "Top This Week",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.calendar_view_month),
-                    text: "Top This Month",
-                  ),
-                ],
-              ),
-            ),
-          ),
-          body: TabBarView(
-            physics: NeverScrollableScrollPhysics(),
-            children: [
-              NewReleases(),
-              MostPopular(),
-              LibraryPage(),
-              LibraryPage(),
-              LibraryPage(),
-              LibraryPage(),
-            ],
-          ),
+    return loading ? Center(
+      child: CircularProgressIndicator(color: PROGRESS_INDICATOR_COLOUR),
+    ) : error ? Center(
+        child: Icon(
+          Icons.error_outline,
+          color: ERROR_COLOUR,
+          size: 50.0,
+          semanticLabel: 'Error loading search results',
+        )
+    ) : Container(
+      height: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 150,
+      child: SmartRefresher(
+        controller: refreshController,
+        enablePullDown: true,
+        header: MaterialClassicHeader(),
+        onRefresh: () async {
+          await load();
+          refreshController.refreshCompleted();
+        },
+        child: ListView (
+          controller: listController,
+          children: buildResultsList(),
         ),
       ),
     );

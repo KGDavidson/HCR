@@ -49,7 +49,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       error = false;
     });
 
-    var uri = Uri.parse("https://readcomiconline.li/Search/Comic");
+    var uri = Uri.parse(URL_BASE + "Search/Comic");
     var formData = new Map<String, dynamic>();
     formData['keyword'] = searchString;
 

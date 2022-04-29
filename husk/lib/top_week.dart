@@ -43,7 +43,7 @@ class _TopWeekState extends State<TopWeek> {
       loading = true;
       error = false;
     });
-    var uri = Uri.parse("https://readcomiconline.li");
+    var uri = Uri.parse(URL_BASE);
 
     final response = await http.post(uri, headers: HEADERS);
     if (response.statusCode == 200) {
@@ -53,14 +53,14 @@ class _TopWeekState extends State<TopWeek> {
         dom.Element comic = comics[i];
 
         String comicName = comic.getElementsByTagName("span")[0].text.trim();
-        String comicHref = "https://readcomiconline.li/" + comic.getElementsByTagName("a")[0].attributes["href"];
+        String comicHref = URL_BASE + comic.getElementsByTagName("a")[0].attributes["href"];
         String imgSrc = comic.getElementsByTagName("img")[0].attributes['src'];
         String latestIssue = comic.getElementsByTagName("p")[1].text.replaceAll("Latest: Issue ", "").trim();
         String imageUrl;
         if (imgSrc.contains("http")){
           imageUrl = imgSrc;
         } else {
-          imageUrl = "https://readcomiconline.li" + imgSrc;
+          imageUrl = URL_BASE + imgSrc;
         }
 
         topWeekItems[comicName] = <String>[

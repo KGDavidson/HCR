@@ -44,7 +44,7 @@ class _MostPopularState extends State<MostPopular> {
       loading = true;
       error = false;
     });
-    var uri = Uri.parse("https://readcomiconline.li/ComicList/MostPopular");
+    var uri = Uri.parse(URL_BASE + "ComicList/MostPopular");
 
     final response = await http.post(uri, headers: HEADERS);
     if (response.statusCode == 200 && html.parse(response.body).getElementsByClassName("listing").length > 0) {
@@ -58,7 +58,7 @@ class _MostPopularState extends State<MostPopular> {
         dom.Document title = html.parse(titleHTML);
 
         String comicName = comic.children[0].getElementsByTagName("a")[0].text.trim();
-        String comicHref = "https://readcomiconline.li" + comic.children[0].getElementsByTagName("a")[0].attributes["href"];
+        String comicHref = URL_BASE + comic.children[0].getElementsByTagName("a")[0].attributes["href"];
         String latestIssue = comic.children[1].text.replaceAll("Issue ", "").replaceAll("Completed", "//").trim();
         String description = title.getElementsByTagName("p")[1].text.replaceAll("...", "").replaceAll("N/a", "...").trim();
         String imgSrc = title.getElementsByTagName("img")[0].attributes['src'];
@@ -66,7 +66,7 @@ class _MostPopularState extends State<MostPopular> {
         if (imgSrc.contains("http")){
           imageUrl = imgSrc;
         } else {
-          imageUrl = "https://readcomiconline.li" + imgSrc;
+          imageUrl = URL_BASE + imgSrc;
         }
 
         mostPopularItems[comicName] = <String>[

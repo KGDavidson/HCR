@@ -61,7 +61,7 @@ class _ReaderState extends State<Reader> with SingleTickerProviderStateMixin {
       error = false;
     });
 
-    final response = await http.get(Uri.parse("https://readcomiconline.li/" + issueHrefs[singleIssue] + "&quality=hq"), headers: HEADERS);
+    final response = await http.get(Uri.parse(URL_BASE + issueHrefs[singleIssue] + "&quality=hq"), headers: HEADERS);
     if (response.statusCode == 200){
       String html = response.body;
       String pagesJS = html.split("var lstImages = new Array();")[1].split("var currImage = 0;")[0];

@@ -41,40 +41,23 @@ class _SearchPageState extends State<SearchPage> {
       error = false;
     });
 
-    var uri = Uri.parse("https://readcomiconline.li/Search/Comic");
-    var formData = new Map<String, dynamic>();
-    formData['keyword'] = searchString;
+    var uri = Uri.parse(URL_BASE + "ajax/search?q=" + searchString);
 
-    final response = await http.post(uri, headers: HEADERS, body: formData);
-    if (response.statusCode == 200 && html.parse(response.body).getElementsByClassName("listing").length > 0) {
-      List<dom.Element> comics = html.parse(response.body).getElementsByClassName("listing")[0].getElementsByTagName("tr");
-      comics.removeAt(0);
-      comics.removeAt(0);
-
-      for (int i = 0; i < comics.length; i++){
-        dom.Element comic = comics[i];
-        String titleHTML = comic.children[0].attributes['title'];
-        dom.Document title = html.parse(titleHTML);
-
-        String comicName = comic.children[0].getElementsByTagName("a")[0].text.trim();
-        String comicHref = "https://readcomiconline.li" + comic.children[0].getElementsByTagName("a")[0].attributes["href"];
-        String latestIssue = comic.children[1].text.replaceAll("Issue ", "").replaceAll("Completed", "//").trim();
-        String description = title.getElementsByTagName("p")[0].text.replaceAll("...", "").replaceAll("N/a", "...").trim();
-        String imgSrc = title.getElementsByTagName("img")[0].attributes['src'];
-        String imageUrl;
-        if (imgSrc.contains("http")){
-          imageUrl = imgSrc;
-        } else {
-          imageUrl = "https://readcomiconline.li" + imgSrc;
-        }
+    final response = await http.get(uri, headers: HEADERS);
+    print(response.statusCode);
+    if (response.statusCode == 200 && json.decode(response.body)["status"] == "1") {
+      List responseJson = json.decode(response.body)["data"];
+      for (Map comic in responseJson) {
+        String comicName = comic["title"];
+        String comicHref = URL_BASE + "comic/" + comic["slug"];
+        //String latestIssue = comic.children[1].text.replaceAll("Issue ", "").replaceAll("Completed", "//").trim();
+        //String description = title.getElementsByTagName("p")[0].text.replaceAll("...", "").replaceAll("N/a", "...").trim();
+        String imageUrl = comic["img_url"];
 
         searchItems[comicName] = <String>[
           imageUrl,
-          description,
           comicHref,
-          latestIssue,
         ];
-
       }
       setState(() {
         loading = false;

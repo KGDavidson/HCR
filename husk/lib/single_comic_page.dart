@@ -101,7 +101,7 @@ class _SingleComicPageState extends State<SingleComicPage> {
       if (imgSrc.contains("http")){
         imageUrl = imgSrc;
       } else {
-        imageUrl = "https://readcomiconline.li" + imgSrc;
+        imageUrl = URL_BASE + imgSrc;
       }
 
       issueHrefs = [];
